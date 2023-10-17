@@ -12,18 +12,21 @@ def replace_placeholder(template: str, set_tags: bool = False, **kwargs):
             value = ""
         elif set_tags:
             value = _parse_section_in_tags(value, key)
-        template = template.replace(f"{{{key}}}", value)
+        template = template.replace(f"{{{key}}}", str(value))
     return template
 
 
-def parse_section_placeholder(template, **kwargs):
-    return replace_placeholder(template, set_tags=True, **kwargs)
+def parse_section_placeholder(template, set_tags=True, **kwargs):
+    return replace_placeholder(template, set_tags=set_tags, **kwargs)
 
 
-def _parse_section_in_tags(content: str, tag: str):
-    start_tag = f"=== {tag.replace('_', ' ').capitalize()} ==="
-    end_tag = f"=== {tag.replace('_', ' ').capitalize()} end ==="
-    section = f"{start_tag}\n\n{content}\n\n{end_tag}"
+def _parse_section_in_tags(content: str, tag: str, with_end_tag: bool = False):
+    start_tag = f"# {tag.replace('_', ' ').capitalize()}"
+    end_tag = f"# {tag.replace('_', ' ').capitalize()} end ==="
+    if with_end_tag:
+        section = f"{start_tag}\n\n{content}\n\n{end_tag}"
+    else:
+        section = f"{start_tag}\n\n{content}\n\n"
     return section
 
 

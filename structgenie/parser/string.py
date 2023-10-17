@@ -1,26 +1,24 @@
-import yaml
-from yaml.scanner import ScannerError
-
+import re
 from typing import Union, Any
+
+import yaml
+
+
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
 
 
 def parse_yaml_string(s: str) -> Union[dict, yaml.YAMLError]:
-    result = _parse_yaml_string(s)
-    if isinstance(result, yaml.YAMLError) or isinstance(result, ScannerError):
-        return result
-
+    match = re.match(r"^.*```yaml(.*)```.*$", s, re.DOTALL)
+    if match:
+        s = match.group(1)
+    result = yaml.safe_load(s)
     return _format_keys(result)
 
 
-def _parse_yaml_string(s: str):
-    try:
-        return yaml.safe_load(s)
-    except yaml.YAMLError as exc:
-        return exc
-
-
 def parse_yaml_string_fix(s: str, output_keys: list[str] = None) -> Union[dict, yaml.YAMLError]:
-    return _format_keys(_parse_yaml_string(s), output_keys)
+    return _format_keys(parse_yaml_string(s), output_keys)
 
 
 def _format_keys(d: Any, as_lower_case: bool = True) -> Any:
@@ -42,7 +40,7 @@ def dump_to_yaml_string(d: Union[dict, list], indent=0, sort_keys=False) -> str:
         _d = _format_keys(d, as_lower_case=False)
     else:
         _d = d
-    string = yaml.dump(_d, sort_keys=sort_keys)
+    string = yaml.dump(_d, sort_keys=sort_keys, Dumper=NoAliasDumper)
     if indent > 0:
         string = "\n".join("  " * indent + line for line in string.splitlines())
     return string
@@ -80,3 +78,34 @@ def is_none(s: Union[str, list, dict]) -> bool:
     if isinstance(s, list) and all([is_none(item) for item in s]):
         return True
     return False
+
+
+def parse_multi_line_string(s: str, key_pairs: list[tuple]) -> dict:
+    """Parses a multi-line string with key pairs.
+
+    Args:
+        s (str): The string to parse.
+        key_pairs (list[tuple]): A list of multi-line key and its next key.
+    """
+
+    def extract_multiline_text(text: str, key: str, next_key: str):
+        if next_key:
+            return re.search(f"\n{key}:(.*)\n{next_key}:", text, re.DOTALL).group(1).strip()
+        return re.search(f"\n{key}:(.*)", text, re.DOTALL).group(1).strip()
+
+    def remove_multiline_section(text: str, key: str, next_key: str):
+        if next_key:
+            return re.sub(fr"{key}:(.|\n)*{next_key}:", f"{next_key}:", text, re.DOTALL)
+        return re.sub(fr"{key}:(.|\n)*", "", text, re.DOTALL)
+
+    d = {}
+    text = s
+    for key, next_key in key_pairs:
+        key_ = format_as_key(key)
+        next_key_ = format_as_key(next_key) if next_key else None
+        d[key] = extract_multiline_text(s, key_, next_key_)
+        text = remove_multiline_section(text, key_, next_key_)
+
+    if text.strip():
+        d.update(parse_yaml_string(text))
+    return d

@@ -3,41 +3,88 @@ from typing import Union
 
 from pydantic import BaseModel
 
-from structgenie.parser.string import dump_to_yaml_string
 from structgenie.parser.placeholder import has_placeholder
+from structgenie.parser.string import dump_to_yaml_string
 
 
 # === Format inputs ===
 
-def format_inputs(placeholder_mapping: dict, input_schema: str):
+def format_inputs(placeholder_mapping: dict):
     """Format to input schema or dump to yaml."""
-    input_schema_placeholder = re.findall(r"{.*?}", input_schema, re.DOTALL)
     formatted_inputs = {}
+
     for placeholder, value in placeholder_mapping.items():
         key = re.match(r"{(.*)}", placeholder).group(1)
 
-        if isinstance(value, BaseModel):
-            value = value.dict()
-
-        if isinstance(value, str):
-            formatted_inputs[key] = value
-            continue
-
-        elif isinstance(value, dict) or isinstance(value, list):
-            if value in input_schema_placeholder:
-                formatted_inputs[key] = _format_input_schema_inputs(input_schema, placeholder, value)
-            else:
-                formatted_inputs[key] = dump_to_yaml_string(value)
-
-        else:
-            try:
-                formatted_inputs[key] = str(value)
-            except Exception as e:
-                raise ValueError(f"Value of placeholder {key}: {value} cannot be converted to string. "
-                                 f"Unknown type: {type(value)}. Exception: {e}")
+        formatted_inputs[key] = value_to_string(value)
 
     return formatted_inputs
 
+
+# def format_inputs(placeholder_mapping: dict, input_schema: str):
+#     """Format to input schema or dump to yaml."""
+#     input_schema_placeholder = re.findall(r"{.*?}", input_schema, re.DOTALL)
+#     formatted_inputs = {}
+#     for placeholder, value in placeholder_mapping.items():
+#         key = re.match(r"{(.*)}", placeholder).group(1)
+#
+#         if isinstance(value, BaseModel):
+#             value = value.dict()
+#
+#         if isinstance(value, str):
+#             formatted_inputs[key] = value
+#             continue
+#
+#         elif isinstance(value, dict) or isinstance(value, list):
+#             if value in input_schema_placeholder:
+#                 formatted_inputs[key] = _format_input_schema_inputs(input_schema, placeholder, value)
+#             else:
+#                 formatted_inputs[key] = dump_to_yaml_string(value)
+#
+#         else:
+#             try:
+#                 formatted_inputs[key] = str(value)
+#             except Exception as e:
+#                 raise ValueError(f"Value of placeholder {key}: {value} cannot be converted to string. "
+#                                  f"Unknown type: {type(value)}. Exception: {e}")
+#
+#     return formatted_inputs
+
+# ToDo: remove
+def dump_to_input_schema(input_schema, placeholder_mapping: dict):
+    import re
+    input_dict = {}
+    for line in input_schema.split("\n"):
+        key, value = line.split(":")
+        key = key.strip()
+        value = value.strip()
+        if value in placeholder_mapping:
+            value = placeholder_mapping[value]
+        else:
+            placeholders = re.findall(r"{.*?}", line, re.DOTALL)
+            for placeholder in placeholders:
+                if placeholder in placeholder_mapping:
+                    value = value.replace(placeholder, value_to_string(placeholder_mapping[placeholder]))
+        input_dict[key] = value
+    return dump_to_yaml_string(input_dict)
+
+
+def value_to_string(value):
+    if isinstance(value, BaseModel):
+        value = value.dict()
+
+    if isinstance(value, str):
+        return value
+
+    elif isinstance(value, dict) or isinstance(value, list):
+        return dump_to_yaml_string(value)
+
+    else:
+        try:
+            return str(value)
+        except Exception as e:
+            raise ValueError(f"Value of placeholder {value} cannot be converted to string. "
+                                 f"Unknown type: {type(value)}. Exception: {e}")
 
 # === Load inputs by placeholders ===
 
@@ -65,7 +112,8 @@ def load_placeholder_if_exist(placeholder: str, inputs: dict, **kwargs):
 # === System placeholders ===
 
 def load_system_placeholders(prompt: str, inputs: dict, **kwargs):
-    match = re.findall(r"({{!system.*?}})", prompt, re.DOTALL)
+    match = re.findall(r"(\{\{!system.*?}})", prompt, re.DOTALL)
+
     if match:
         for system_placeholder in match:
             prompt = prompt.replace(

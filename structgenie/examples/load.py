@@ -1,5 +1,7 @@
 from structgenie.examples.base import Example
 from structgenie.parser._template_decomposer import extract_examples_content, extract_system_instruction
+from structgenie.styles.utils import section_in_string
+from structgenie.templates import extract_section
 from structgenie.templates.load_functions import load_and_call_system_function
 
 
@@ -9,8 +11,14 @@ def load_examples_from_file(path: str) -> list[Example]:
         return load_examples_from_string(file.read())
 
 
-def load_examples_from_string(example_string: str, splitter: str = "==="):
+def load_examples_from_string(string: str, splitter: str = "==="):
     """Load examples from a string"""
+
+    # isolate example string
+    if section_in_string(string, "examples"):
+        example_string = extract_section(string, "examples")
+    else:
+        example_string = string
 
     example_content = extract_examples_content(example_string) or example_string
     system_instruction = extract_system_instruction(example_string)

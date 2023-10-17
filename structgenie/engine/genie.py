@@ -1,20 +1,19 @@
 import uuid
-from typing import Union, Callable, Type
+from typing import Union, Callable, Type, Tuple
 
 from colorama import Fore
 from pydantic import BaseModel, Field
 
-from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver
+from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver, BaseIOModel
 from structgenie.driver import LangchainDriverBasic
 from structgenie.errors import ParsingError, ValidationError
 from structgenie.examples import ExampleSelector
 from structgenie.input_output import (
-    load_input_schema,
-    init_input_schema,
     OutputModel,
     load_output_model,
-    init_output_model
+    init_output_model, InputModel
 )
+from structgenie.input_output.load import load_input_model, init_input_model
 from structgenie.operator.default import parse_default
 from structgenie.parser import (
     parse_yaml_string,
@@ -22,25 +21,49 @@ from structgenie.parser import (
     format_inputs,
     prepare_inputs_placeholders
 )
+from structgenie.parser.string import parse_multi_line_string
 from structgenie.templates import (
     extract_sections, load_default_template, load_system_config
 )
 
 
-def run_output_fixing_parser(text: str, output_model: OutputModel):
+def run_output_fixing_parser(text: str, output_model: OutputModel, return_metrics: bool = False, debug: bool = False):
     from colorama import Fore
-    print(Fore.RED + "Fixing parsing error for output:\n" + Fore.RESET)
-    print(Fore.MAGENTA + text + Fore.RESET)
+
+    if debug:
+        print(Fore.RED + "Fixing parsing error for output:\n" + Fore.RESET)
+        print(Fore.MAGENTA + text + Fore.RESET)
+
     fixing_engine = StructGenie.from_defaults("fix_parsing_error", output_model=output_model)
     fixing_engine.output_fixing_parser = None
-    output = fixing_engine.run(inputs=dict(last_output=text))
-    print(Fore.GREEN + "Parsing error fixed! With output:" + Fore.RESET)
-    print(Fore.GREEN + str(output) + Fore.RESET)
-    return output
+    run_metrics = None
+
+    if return_metrics:
+        fixing_engine.return_metrics = True
+        output, run_metrics = fixing_engine.run(inputs=dict(last_output=text))
+    else:
+        output = fixing_engine.run(inputs=dict(last_output=text))
+
+    if debug:
+        print(Fore.GREEN + "Parsing error fixed! With output:" + Fore.RESET)
+        print(Fore.GREEN + str(output) + Fore.RESET)
+
+    return output, run_metrics
+
+
+DEFAULT_RUN_METRICS = {
+    "execution_time": 0,
+    "token_usage": 0,
+    "model_name": None,
+    "model_config": None,
+    "failure_rate": 0,
+    "errors": [],
+}
 
 
 class StructGenie(BaseModel):
     run_id: str = Field(default_factory=lambda: str(uuid.uuid4().hex))
+    run_metrics: dict = DEFAULT_RUN_METRICS
 
     # executor
     driver: Type[BaseGenerationDriver] = LangchainDriverBasic
@@ -58,16 +81,19 @@ class StructGenie(BaseModel):
     # run settings
     max_retries: int = 4
     input_schema: str = None
-    output_model: OutputModel = None
+    input_model: BaseIOModel = None
+    output_model: BaseIOModel = None
     examples: ExampleSelector = None
     instruction: str = None
     debug: bool = False
+    return_metrics: bool = False
 
     # run states
     last_error: Union[Exception, None] = None
     partial_variables: dict = None
 
     return_reasoning: bool = False
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -90,25 +116,20 @@ class StructGenie(BaseModel):
         system_config = sections.get("system_config")
         instruction = sections.get("instruction")
         examples = ExampleSelector.load_examples(sections.get("examples"))
-        output_model = load_output_model(
+        output_model_ = load_output_model(
             sections, examples, output_model=output_model, partial_output_model=partial_output_model
         )
-        input_schema = load_input_schema(sections, examples)
+        input_model_ = load_input_model(sections, examples, input_model=kwargs.get("input_model"))
 
         return cls.load_engine(
             instruction=instruction,
-            input_schema=input_schema,
-            output_model=output_model,
+            input_model=input_model_,
+            output_model=output_model_,
             examples=examples,
             prompt_kwargs=prompt_kwargs,
             system_config=system_config,
             **kwargs
         )
-
-    @classmethod
-    def load_examples(cls, examples: Union[str, list] = None):
-        """Load examples from a string, list or file."""
-        return ExampleSelector.load_examples(examples)
 
     @classmethod
     def from_instruction(
@@ -124,23 +145,28 @@ class StructGenie(BaseModel):
         if examples:
             examples = ExampleSelector.load_examples(examples)
 
-        output_model = init_output_model(output_model, examples=examples, partial_output_model=partial_output_model)
-        input_schema = init_input_schema(input_schema, examples=examples)
+        output_model_ = init_output_model(output_model, examples=examples, partial_output_model=partial_output_model)
+        input_model_ = init_input_model(input_schema, examples=examples)
 
         return cls.load_engine(
             instruction=instruction,
-            input_schema=input_schema,
-            output_model=output_model,
+            input_model=input_model_,
+            output_model=output_model_,
             examples=examples,
             prompt_kwargs=prompt_kwargs,
             **kwargs
         )
 
     @classmethod
+    def load_examples(cls, examples: Union[str, list] = None):
+        """Load examples from a string, list or file."""
+        return ExampleSelector.load_examples(examples)
+
+    @classmethod
     def load_engine(
             cls,
             instruction: str,
-            input_schema: str,
+            input_model: InputModel,
             output_model: OutputModel,
             examples: ExampleSelector = None,
             prompt_kwargs: dict = None,
@@ -149,6 +175,11 @@ class StructGenie(BaseModel):
 
         from structgenie.prompt.builder import PromptBuilder
         from structgenie.validation.validator import Validator
+
+        if kwargs.get("partial_output_model"):
+            output_model_ = init_output_model(output_model, partial_output_model=kwargs.get("partial_output_model"))
+        else:
+            output_model_ = output_model
 
         kwargs = kwargs or {}
 
@@ -171,7 +202,7 @@ class StructGenie(BaseModel):
             instruction=instruction,
             examples=examples,
             output_model=output_model,
-            input_schema=input_schema,
+            input_model=input_model,
             **prompt_kwargs
         )
         validator = Validator.from_output_model(output_model)
@@ -180,11 +211,14 @@ class StructGenie(BaseModel):
             instruction=instruction,
             prompt_builder=prompt_builder,
             validator=validator,
-            output_model=output_model,
-            input_schema=input_schema,
+            output_model=output_model_,
+            input_model=input_model,
             examples=examples,
             **kwargs
         )
+
+    async def apply(self, *args, **kwargs):
+        return NotImplemented
 
     # === Setters ===
 
@@ -212,19 +246,31 @@ class StructGenie(BaseModel):
             **kwargs: Keyword arguments for the chain.
 
         Returns:
-            Any: The output of the chain.
+            Output (any): The output of the chain.
+            (optional) Output (dict), run_metrics (dict): The output of the chain and the run metrics.
+
         """
         self.last_error = None
 
         n_run = 0
         while n_run <= self.max_retries:
             try:
-                return self._run(inputs, self.last_error, **kwargs)
+                output = self._run(inputs, self.last_error, **kwargs)
+                if self.return_metrics:
+                    return output, self.run_metrics
+                return output
+
             except Exception as e:
-                print(f"Error: {e}")
+
                 self.last_error = e
                 n_run += 1
                 if self.debug:
+                    print(f"Error: {e}")
+                    raise e
+                if self.return_metrics:
+                    self._log_error(e)
+                if n_run > self.max_retries:
+                    print(self.run_metrics["errors"])
                     raise e
 
     def _run(self, inputs: dict, error: Exception, **kwargs):
@@ -242,14 +288,20 @@ class StructGenie(BaseModel):
         # prepare
         inputs = self.prep_inputs(inputs, **kwargs)
         prompt = self.prep_prompt(error, **inputs)
+
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
         executor = self.prep_executor(prompt, **kwargs)
 
         if self.debug:
+            print(">>> Inputs:\n", inputs_)
             print(prompt.format(**inputs_))
 
         # generate
-        text = self._call_executor(executor, inputs_)
+        if self.return_metrics:
+            text, run_metrics = self._call_executor(executor, inputs_, return_metrics=True)
+            self._log_metrics(run_metrics)
+        else:
+            text = self._call_executor(executor, inputs_)
 
         if self.debug:
             print(">>> Generated text:\n")
@@ -302,8 +354,18 @@ class StructGenie(BaseModel):
 
     def format_inputs(self, prompt: str, inputs: dict, **kwargs) -> dict:
         """Analyzes input variables in prompt and prepares inputs for executor."""
+
         prompt, placeholder_map = prepare_inputs_placeholders(prompt, inputs, **kwargs)
-        return format_inputs(placeholder_map, self.input_schema)
+        if self.debug:
+            print(">>> Placeholder map:\n", placeholder_map)
+        input_dict = format_inputs(placeholder_map)
+
+        if self.debug:
+            print(">>> Formatted inputs:\n", input_dict)
+            print(">>> Input schema:\n", self.input_model.template_schema)
+            print(">>> Input model:\n", self.input_model)
+        input_dict["input"] = self.input_model.dump_to_prompt(inputs, **kwargs)
+        return input_dict
 
     # === output parsing ===
 
@@ -338,11 +400,37 @@ class StructGenie(BaseModel):
     def _parse_output(self, text: str, error: Exception) -> dict:
         """Run output fixing parser if defined."""
 
+        # manual fix for multiline output
+        if any(line.multiline for line in self.output_model.lines):
+            if self.debug:
+                print(
+                    Fore.RED + "Multiline output detected. Fixing parsing error for each line separately." + Fore.RESET)
+            idx_keys = [(i, line.key) for i, line in enumerate(self.output_model.lines) if line.multiline]
+            key_paris = []
+            for idx, key in idx_keys:
+                next_key = self.output_model.lines[idx + 1].key if idx + 1 < len(self.output_model.lines) else None
+                key_paris.append((key, next_key))
+            try:
+                return parse_multi_line_string(text, key_paris)
+            except Exception as e:
+                print(Fore.RED + f"Failed Multiline parsing" + Fore.RESET)
+
         if self.output_fixing_parser is None:
             raise ParsingError(f"Error while parsing output: {error}", text)
 
         try:
-            return self.output_fixing_parser(text, output_model=self.output_model)
+            output, run_metrics = self.output_fixing_parser(
+                text,
+                output_model=self.output_model,
+                return_metrics=self.return_metrics,
+                debug=self.debug
+            )
+            if self.return_metrics:
+                self._log_error(ParsingError(f"Error while parsing output: {error}", text))
+                self._log_metrics(run_metrics)
+
+            return output
+
 
         except Exception as e:
             raise ParsingError(
@@ -350,36 +438,66 @@ class StructGenie(BaseModel):
                 text
             )
 
-    def _parse_defaults(self, output: dict, inputs):
+    def _parse_defaults(self, output: dict, inputs: dict):
         return parse_default(output, self.output_model, **inputs)
 
     # === output validation ===
 
-    def validate_output(self, output: dict, formatted_inputs: dict):
+    def validate_output(self, output: dict, inputs: dict):
         """Validate the output of the chain.
 
         Args:
             output (Any): The output of the chain.
+            inputs (dict): The inputs for the chain for extra variables used in output_schema.
 
         Returns:
             Any: The output of the chain.
         """
 
-        validation_errors = self.validator.validate(output, formatted_inputs)
+        validation_errors = self.validator.validate(output, inputs)
         if validation_errors:
             raise ValidationError(f"Validation failed with errors:\n{validation_errors}", output)
 
+    # === helpers ===
+
+    def _log_metrics(self, metrics: dict):
+        """Log run metrics.
+
+        Remarks: Model name and config are only logged if not already set because output_fixing run
+        could have different model and config.
+        """
+        if not self.run_metrics["model_name"]:
+            self.run_metrics["model_name"] = metrics.get("model_name", None)
+
+        if not self.run_metrics["model_config"]:
+            self.run_metrics["model_config"] = metrics.get("model_config", None)
+
+        self.run_metrics["token_usage"] += metrics.get("token_usage", 0)
+        self.run_metrics["execution_time"] += metrics.get("execution_time", 0)
+        self.run_metrics["failure_rate"] += metrics.get("failure_rate", 1)
+        self.run_metrics["errors"].extend(metrics.get("errors", []))
+
+    def _log_error(self, error: Exception):
+        """Log error in run_metrics."""
+        self.run_metrics["errors"].append(str(error))
+
     @staticmethod
-    def _call_executor(executor: BaseGenerationDriver, inputs: dict) -> str:
+    def _call_executor(
+            executor: BaseGenerationDriver,
+            inputs: dict,
+            return_metrics: bool = False
+    ) -> Union[str, Tuple[str, dict]]:
         """Call the executor.
 
         Args:
             executor (Any): The executor.
             inputs (dict): The inputs for the executor.
-
+            return_metrics (bool): Whether to return metrics.
         Returns:
             str: The output of the executor.
         """
+        if return_metrics:
+            return executor.predict_and_measure(**inputs)
         return executor.predict(**inputs)
 
     @staticmethod

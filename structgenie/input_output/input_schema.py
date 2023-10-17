@@ -8,6 +8,8 @@ def init_input_schema(input_schema: Union[str, dict, list], examples: BaseExampl
     """Initialize the input schema."""
     if input_schema:
         if isinstance(input_schema, str):
+            if "---" in input_schema:
+                input_schema = input_schema.split("---")[0].strip()
             return input_schema
         elif isinstance(input_schema, dict):
             return dump_to_yaml_string(input_schema)
@@ -25,6 +27,8 @@ def load_input_schema(sections: dict, examples: BaseExampleSelector = None, **kw
 
     # If explicit Input Schema is provided
     if sections["input_schema"]:
+        if "---" in sections["input_schema"]:
+            sections["input_schema"] = sections["input_schema"].split("---")[0].strip()
         return parse_schema_from_template(sections["input_schema"])
 
     # If no explicit Input Schema, try to extract input keys from Examples

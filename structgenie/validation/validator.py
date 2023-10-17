@@ -1,9 +1,10 @@
-from structgenie.parser.placeholder import has_placeholder
+from structgenie.base import BaseValidator, BaseIOModel
 from structgenie.parser import replace_placeholder_from_inputs_and_kwargs, dump_to_yaml_string
-from structgenie.base import BaseValidator, BaseOutputModel
-from structgenie.validation._type import *
+from structgenie.parser.placeholder import has_placeholder
+from structgenie.validation._content import validate_content
 from structgenie.validation._object import *
 from structgenie.validation._rule import *
+from structgenie.validation._type import *
 
 
 class Validator(BaseValidator):
@@ -17,7 +18,7 @@ class Validator(BaseValidator):
         self.validation_config = validation_config
 
     @classmethod
-    def from_output_model(cls, output_model: BaseOutputModel):
+    def from_output_model(cls, output_model: BaseIOModel):
         """Build validator from output model"""
         return cls(validation_config=output_model.as_dict)
 
@@ -25,7 +26,10 @@ class Validator(BaseValidator):
         """Validate the output based on the validation config."""
 
         validation_config = self._parse_inputs(inputs)
-        validation_errors = self._validate(output, validation_config)
+        try:
+            validation_errors = self._validate(output, validation_config)
+        except Exception as e:
+            return f"Error {e} validating output: {dump_to_yaml_string(output)}"
 
         if validation_errors:
             return "\n".join(validation_errors) + f"\nFor output: {dump_to_yaml_string(output)}"
@@ -56,6 +60,9 @@ class Validator(BaseValidator):
 
         # validate nested value
         errors += self._validate_nested(key, value, val_config)
+
+        # validate content
+        errors += [validate_content(key, value, val_config)]
 
         return errors
 

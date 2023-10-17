@@ -1,9 +1,9 @@
-from structgenie.base import BaseOutputModel
+from structgenie.base import BaseIOModel
 from structgenie.operator.default_loops import parse_default_in_loop, has_defaults, has_loop
 from structgenie.parser.string import is_none
 
 
-def parse_default(output: dict, output_model: BaseOutputModel, **kwargs):
+def parse_default(output: dict, output_model: BaseIOModel, **kwargs):
     """Parse default values to output
 
     Args:
@@ -36,7 +36,7 @@ def parse_default(output: dict, output_model: BaseOutputModel, **kwargs):
     return output
 
 
-def parse_default_in_dict(output: dict, output_model: BaseOutputModel, parent_key: str, **kwargs):
+def parse_default_in_dict(output: dict, output_model: BaseIOModel, parent_key: str, **kwargs):
     """Parse default values to nested dict items in loop
     """
     if not has_defaults(output_model.get_nested_dict(parent_key)):
@@ -60,7 +60,7 @@ def parse_default_in_dict(output: dict, output_model: BaseOutputModel, parent_ke
     return output
 
 
-def parse_default_in_list(output: list, output_model: BaseOutputModel, parent_key: str, **kwargs):
+def parse_default_in_list(output: list, output_model: BaseIOModel, parent_key: str, **kwargs):
     """Parse default values to nested list items"""
     if not has_defaults(output_model.get_nested_dict(parent_key)):
         return output
@@ -76,7 +76,7 @@ def parse_default_in_list(output: list, output_model: BaseOutputModel, parent_ke
     return output
 
 
-def _is_nested(output_model: BaseOutputModel, key: str) -> bool:
+def _is_nested(output_model: BaseIOModel, key: str) -> bool:
     """Check if key is nested"""
     if len(output_model.get_nested_dict(key)) > 1:
         return True

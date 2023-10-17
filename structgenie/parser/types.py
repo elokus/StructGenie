@@ -1,11 +1,10 @@
-import re
 import inspect
-from importlib import import_module
-
+import re
 import typing
 
 TYPE_DICT = {
     "string": "str",
+    "multiline": "str",
     "integer": "int",
     "float": "float",
     "boolean": "bool",

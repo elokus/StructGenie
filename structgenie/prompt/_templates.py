@@ -8,7 +8,6 @@ DEFAULT_SCHEMA_TEMPLATE = """{instruction}
 {examples}
 {remarks}
 {input}
----
 {output_schema}
 """
 FORMAT_INSTRUCTIONS_TEMPLATE = """Please return a response in yaml format using the following schema:
@@ -23,3 +22,10 @@ ERROR_TEMPLATE = """{remarks}
 The following error occurred during your last attempt:
 {error}
 Please fix the error and try again."""
+
+FIX_PARSING_ERROR_TEMPLATE = """The output from a previous generation task runs into a parsing error. The error is raised during parsing a string output with yaml.load() function.
+This is often caused by a non-ascii character in the output, wrong multiline string format or characters like ":" in the output string that interfere with the yaml format.
+Please try to fix the output provided below so that it can be parsed by yaml.load() function according to following format instructions:
+{format_instructions}
+{remarks}
+{input}"""

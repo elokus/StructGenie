@@ -1,8 +1,11 @@
-from typing import Union
+import time
+from typing import Union, Tuple
+
+from langchain import LLMChain, PromptTemplate
+from langchain.callbacks import get_openai_callback
+from langchain.chat_models import ChatOpenAI
 
 from structgenie.base import BaseGenerationDriver
-from langchain import LLMChain, PromptTemplate
-from langchain.chat_models import ChatOpenAI
 
 
 def load_langchain_llm(model_name: str, **kwargs):
@@ -51,6 +54,32 @@ class LangchainDriver(BaseGenerationDriver):
     def predict(self, **kwargs) -> str:
         return self.executor.predict(**kwargs)
 
+    def predict_and_measure(self, **kwargs) -> Tuple[str, dict]:
+        with get_openai_callback() as cb:
+            exec_start = time.time()
+            output = self.executor.predict(**kwargs)
+            execution_metrics = {
+                "execution_time": time.time() - exec_start,
+                "token_usage": cb.total_tokens,
+                "model_name": self.model_name,
+                "model_config": self.llm_kwargs,
+            }
+        return output, execution_metrics
+
+    async def predict_async(self, **kwargs) -> str:
+        return await self.executor.apredict(**kwargs)
+
+    async def predict_and_measure_async(self, **kwargs) -> Tuple[str, dict]:
+        with get_openai_callback() as cb:
+            exec_start = time.time()
+            output = await self.executor.apredict(**kwargs)
+            execution_metrics = {
+                "execution_time": time.time() - exec_start,
+                "token_usage": cb.total_tokens,
+                "model_name": self.model_name,
+                "model_config": self.llm_kwargs,
+            }
+        return output, execution_metrics
 
 class LangchainDriverExpert(LangchainDriver):
     model_name: str = "gpt-4"

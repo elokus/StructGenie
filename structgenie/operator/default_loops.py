@@ -1,9 +1,9 @@
+from structgenie.base import BaseIOModel
 from structgenie.errors import TemplateError
-from structgenie.base import BaseOutputModel
 from structgenie.parser.string import format_as_variable
 
 
-def parse_default_in_loop(output: dict, output_model: BaseOutputModel, key: str, **kwargs):
+def parse_default_in_loop(output: dict, output_model: BaseIOModel, key: str, **kwargs):
     """Parse default values in loop objects"""
 
     if not has_defaults(output_model.get_nested_dict(key, full_key=False)):
@@ -33,7 +33,7 @@ def has_defaults(val_dict: dict, key: str = None) -> bool:
     return val_dict.get(key, {}).get("default") is not None
 
 
-def has_loop(output_model: BaseOutputModel, key: str) -> bool:
+def has_loop(output_model: BaseIOModel, key: str) -> bool:
     return output_model.get(key).rule is not None and output_model.get(key).rule.startswith("for")
 
 
@@ -69,7 +69,7 @@ def _set_default_to_items(output: dict, output_model, iter_values: list, key):
     return output
 
 
-def _set_default_to_dict(output: dict, output_model: BaseOutputModel, parent_key: str, **kwargs):
+def _set_default_to_dict(output: dict, output_model: BaseIOModel, parent_key: str, **kwargs):
     """Set default values to dict items in loop
 
     Loops through iter_values and creates key, value pairs in output dict where key is derived from iterator
@@ -111,7 +111,7 @@ def _set_default_to_dict(output: dict, output_model: BaseOutputModel, parent_key
     return output
 
 
-def _set_default_to_dict_loop(output: dict, output_model: BaseOutputModel, iterator: str, iter_values: list,
+def _set_default_to_dict_loop(output: dict, output_model: BaseIOModel, iterator: str, iter_values: list,
                               parent_key: str):
     """Set default values to dict items in loop
 
@@ -131,7 +131,7 @@ def _set_default_to_dict_loop(output: dict, output_model: BaseOutputModel, itera
     return output
 
 
-def _set_default_to_list_loop(output: list, output_model: BaseOutputModel, iterator: str, iter_values: list,
+def _set_default_to_list_loop(output: list, output_model: BaseIOModel, iterator: str, iter_values: list,
                               parent_key: str):
     """Set default values to list[dict] items  in loop
 
@@ -163,7 +163,7 @@ def _set_default_to_list_loop(output: list, output_model: BaseOutputModel, itera
     return output_list
 
 
-def _set_default_to_key(output: dict, output_model: BaseOutputModel, iterator: str, iter_values: list, parent_key: str,
+def _set_default_to_key(output: dict, output_model: BaseIOModel, iterator: str, iter_values: list, parent_key: str,
                         item_key: str):
     if output_model.get(parent_key).type == "dict":
         return _set_default_to_dict(output, output_model, parent_key, **{iterator: item_key})

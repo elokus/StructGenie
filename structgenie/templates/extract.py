@@ -1,20 +1,7 @@
-from typing import Optional, Union
 import re
+from typing import Optional, Union
 
-SECTION_TAGS = {
-    "SEPERATOR_STYLE": ['=== {section} ===', '=== {section} end ==='],
-    "HTML_STYLE": ['<section {section}>', '</section {section}>'],
-    "GUIDANCE_STYLE": ['{{#{section}~}}', '{{~/{section}}}'],
-    "MARKDOWN_STYLE": ['# {section}', '# ---'],
-}
-
-SECTION_ALIASES = {
-    "instruction": ["instructions", "instruction"],
-    "examples": ["examples", "example"],
-    "output_schema": ["response schema", "response model", "output model", "output schema", "output", "response"],
-    "input_schema": ["input schema", "input model", "input"],
-    "system_config": ["system configuration", "system config", "config"]
-}
+from structgenie.styles.tags import SECTION_TAGS, SECTION_ALIASES
 
 EXTRA_PATTERN = {
     "instruction": "^(?:\n)?(\w.*?)(?=\n\n|{next_start_prefix}|Begin!)",
@@ -89,12 +76,16 @@ def extract_sections_with_aliases(template: str, style: str, section: str = None
                     if match:
                         extracted_sections[section_key] = match.group(1).strip()
                         break
+
         # If no section for instruction and input was found, try to extract the section from extra pattern
         if section_key not in extracted_sections and section_key in EXTRA_PATTERN:
             pattern = EXTRA_PATTERN[section_key].replace("{next_start_prefix}", re.escape(next_start_prefix))
             match = re.search(pattern, template, re.DOTALL)
             if match:
                 extracted_sections[section_key] = match.group(1).strip()
+
+    if "\n---\n" in extracted_sections["input_schema"]:
+        extracted_sections["input_schema"] = extracted_sections["input_schema"].split("\n---\n")[0].strip()
 
     if section:
         return extracted_sections[section]

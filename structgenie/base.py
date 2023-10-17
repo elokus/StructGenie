@@ -4,7 +4,7 @@ YAML format was chosen because it is easy to read and write for humans and machi
 
 """
 from abc import ABC, abstractmethod
-from typing import Union, Any, Optional
+from typing import Union, Any, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -26,15 +26,17 @@ class BaseExampleSelector(BaseModel, ABC):
         pass
 
 
-class BaseOutputAttribute(BaseModel):
+class BaseIOLine(BaseModel):
     key: str
     type: str = "any"
     rule: Optional[str] = None
+    options: Optional[list] = None
+    multiple_select: bool = False
     default: Union[str, int, float, bool, list, dict] = None
 
 
-class BaseOutputModel(BaseModel, ABC):
-    attributes: BaseOutputAttribute
+class BaseIOModel(BaseModel, ABC):
+    lines: list[BaseIOLine]
 
     # === class methods ===
 
@@ -45,7 +47,7 @@ class BaseOutputModel(BaseModel, ABC):
 
     @classmethod
     @abstractmethod
-    def from_schema(cls, schema: str):
+    def from_string(cls, schema: str):
         pass
 
     @classmethod
@@ -72,11 +74,6 @@ class BaseOutputModel(BaseModel, ABC):
 
     @property
     @abstractmethod
-    def output_keys(self) -> list[str]:
-        pass
-
-    @property
-    @abstractmethod
     def defaults(self):
         pass
 
@@ -96,6 +93,13 @@ class BaseOutputModel(BaseModel, ABC):
 
     @abstractmethod
     def get_default(self, key: str, **kwargs):
+        pass
+
+    def __len__(self):
+        return len(self.lines)
+
+    @abstractmethod
+    def dump_to_prompt(self, param, **kwargs):
         pass
 
 
@@ -185,7 +189,79 @@ class BaseGenerationDriver(ABC):
         """
         pass
 
+    @abstractmethod
+    def predict_and_measure(self, **kwargs) -> Tuple[str, dict]:
+        """Generate the text and measure the performance.
+
+        Returns:
+            Tuple[str, dict]: The generated text and the performance metrics.
+        """
+        pass
+
+    @abstractmethod
+    async def predict_async(self, **kwargs) -> str:
+        """Generate the text. (async)"""
+        pass
+
+    @abstractmethod
+    async def predict_and_measure_async(self, **kwargs) -> Tuple[str, dict]:
+        """Generate the text and measure the performance.
+
+        Returns:
+            Tuple[str, dict]: The generated text and the performance metrics.
+        """
+        pass
+
     @classmethod
     @abstractmethod
     def load_driver(cls, prompt: Union[str, Any], **kwargs):
+        pass
+
+
+class BaseExample(BaseModel, ABC):
+    input: dict
+    output: dict
+    _template: str = "{input}---\n{output}"
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_string(cls, text: str):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, example_dict: dict):
+        pass
+
+    @abstractmethod
+    def filter(self, **kwargs) -> bool:
+        """Filter example based on input kwargs."""
+        return True
+
+    @property
+    def token_count(self) -> int:
+        """Return the total number of tokens in the input and output."""
+        from structgenie.utils import count_tokens
+        return count_tokens(str(self))
+
+    @property
+    def input_keys(self):
+        return list(self.input.keys())
+
+    @property
+    def output_keys(self):
+        return list(self.output.keys())
+
+    @property
+    @abstractmethod
+    def output_types(self):
+        pass
+
+    @property
+    @abstractmethod
+    def input_types(self):
         pass

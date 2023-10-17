@@ -163,7 +163,7 @@ Our development plans for **StructGenie** include:
 2. **Validation Rules**: Adding a set of validation rules for more robust structured outputs.
 3. **OptimizationEngine Release**: Launching the OptimizationEngine to enhance template effectiveness.
 
-## OptimizationEngine (Coming Soon)
+## OptimizationEngine (Moved to separate Project -> LLMP)
 
 **OptimizationEngine** is an addition to StructGenie that aims to test and improve templates for LLM generation tasks.
 

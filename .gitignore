@@ -3,3 +3,5 @@
 /.pypirc
 /dist
 /structgenie.egg-info
+/.idea
+

@@ -2,12 +2,12 @@ import random
 from typing import Union
 
 from structgenie.base import BaseExampleSelector
+from structgenie.examples.base import Example
 from structgenie.examples.load import (
     load_examples_from_string,
     load_examples_from_list,
     load_examples_from_file
 )
-from structgenie.examples.base import Example
 
 
 class ExampleSelector(BaseExampleSelector):
@@ -55,13 +55,18 @@ class ExampleSelector(BaseExampleSelector):
         """Add example to example pool."""
         self.examples.append(example)
 
-    def to_prompt(self, max_token: int = 2000, **kwargs) -> str:
+    def to_prompt(self, max_token: int = 2000, return_all: bool = False, **kwargs) -> str:
         """Return a prompt string with examples filtered by kwargs.
 
         Args:
             max_token (int, optional): Max token length of prompt. Defaults to 2000.
+            return_all (bool, optional): Return all examples. Defaults to False.
             kwargs: Keyword arguments to filter examples by.
+
         """
+        if return_all:
+            return self._examples_to_string(self.examples)
+
 
         example_pool = self.filter_examples(**kwargs) if kwargs else self.examples.copy()
         if len(example_pool) == 0:
@@ -86,14 +91,13 @@ class ExampleSelector(BaseExampleSelector):
 
     def _examples_to_string(self, examples: list[Example]) -> str:
         """Convert list of examples to string."""
-        return self.example_splitter.join([str(example) for example in examples])
+        return self.example_splitter.join(
+            [example.to_string(template=self.example_template) for example in examples]
+        )
 
     @property
     def input_keys(self):
         return self.examples[0].input_keys
-
-    def output_type_dict(self):
-        return self.examples[0].output_dict()
 
     def __len__(self):
         return len(self.examples)

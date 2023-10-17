@@ -1,21 +1,25 @@
-from abc import ABC, abstractmethod
-from typing import Any, List
+from pydantic import validator
 
-from pydantic import BaseModel, validator
-
-from structgenie.base import BaseExampleSelector
+from structgenie.base import BaseExample
 from structgenie.parser import dump_to_yaml_string, parse_yaml_string, get_type_dict_from_object
 
 
-class Example(BaseModel):
+class Example(BaseExample):
     input: dict
     output: dict
     _template: str = "{input}---\n{output}"
 
     def __str__(self):
-        return self._template.format(
-            input=dump_to_yaml_string(self.input), output=dump_to_yaml_string(self.output)
-        )
+        return self.to_string()
+
+    def to_string(self, template: str = None):
+        if template is None:
+            template = self._template
+        for key in ["input", "output"]:
+            placeholder = "{" + key + "}"
+            if placeholder in template:
+                template = template.replace(placeholder, dump_to_yaml_string(getattr(self, key)))
+        return template
 
     @validator("input", "output", pre=True)
     def _parse_yaml(cls, v):
@@ -45,7 +49,11 @@ class Example(BaseModel):
     def from_dict(cls, example_dict: dict):
         return cls(**example_dict)
 
-    def output_dict(self):
+    def output_type_dict(self):
+        """Return output as a dictionary with dot notation of nested objects."""
+        return get_type_dict_from_object(self.output)
+
+    def input_type_dict(self):
         """Return output as a dictionary with dot notation of nested objects."""
         return get_type_dict_from_object(self.output)
 
@@ -65,3 +73,11 @@ class Example(BaseModel):
     @property
     def input_keys(self):
         return list(self.input.keys())
+
+    @property
+    def output_types(self):
+        return get_type_dict_from_object(self.output)
+
+    @property
+    def input_types(self):
+        return get_type_dict_from_object(self.input)
