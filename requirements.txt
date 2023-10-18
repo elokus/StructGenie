@@ -1,4 +1,4 @@
-langchain~=0.0.231
+langchain~=0.0.23
 uuid~=1.30
 pydantic~=1.10.8
 pyyaml~=6.0

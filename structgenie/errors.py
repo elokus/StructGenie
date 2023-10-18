@@ -7,6 +7,40 @@ class ParsingError(Exception):
         return f"{self.msg}\n\nGenerated Text:\n{self.generated_text}"
 
 
+class ParsingPartialError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class ParsingFixingError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class PromptError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class TemplateError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+# === VALIDATION ERRORS ===
+
 class ValidationError(Exception):
     def __init__(self, msg: str, output: dict):
         self.msg = msg
@@ -16,5 +50,33 @@ class ValidationError(Exception):
         return f"{self.msg}\n\nParsed Output:\n{self.output}"
 
 
-class TemplateError(Exception):
+class ValidationRuleError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class ValidationTypeError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class ValidationKeyError(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return f"{self.msg}"
+
+
+class MultilineParsingError(Exception):
+    pass
+
+
+class YamlParsingError(Exception):
     pass

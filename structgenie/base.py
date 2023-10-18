@@ -8,6 +8,8 @@ from typing import Union, Any, Optional, Tuple
 
 from pydantic import BaseModel
 
+from structgenie.utils.helper import count_tokens
+
 
 class BaseExampleSelector(BaseModel, ABC):
     """Interface for selecting examples to include in prompts."""
@@ -245,7 +247,7 @@ class BaseExample(BaseModel, ABC):
     @property
     def token_count(self) -> int:
         """Return the total number of tokens in the input and output."""
-        from structgenie.utils import count_tokens
+
         return count_tokens(str(self))
 
     @property

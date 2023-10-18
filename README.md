@@ -57,7 +57,7 @@ pip install structgenie
 ### Generation from a simple Template
 
 ```python
-from structgenie.engine import StructGenie
+from structgenie.engine import StructEngine
 
 # Define your input template
 template = """
@@ -74,7 +74,7 @@ Family.$role.age: <int>
 """
 
 # Initialize StructGenie with the template
-genie = StructGenie.from_template(template)
+genie = StructEngine.from_template(template)
 
 # Supply your inputs in dictionary format
 inputs = {

@@ -1,0 +1,6 @@
+# Instruction
+The output from a previous generation task runs into a parsing error. The error is raised during parsing a string output with yaml.load() function.
+It is required to fix the error and make the code work.
+
+# Input
+Error message: {error_msg}

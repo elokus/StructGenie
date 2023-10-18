@@ -5,24 +5,24 @@ from colorama import Fore
 from pydantic import BaseModel, Field
 
 from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver
-from structgenie.driver import LangchainDriverBasic
-from structgenie.errors import ParsingError, ValidationError
-from structgenie.examples import ExampleSelector
-from structgenie.input_output import (
+from structgenie.components import ExampleSelector
+from structgenie.components import (
     load_input_schema,
     init_input_schema,
     OutputModel,
     load_output_model,
     init_output_model
 )
-from structgenie.operator.default import parse_default
-from structgenie.parser import (
+from structgenie.driver import LangchainDriverBasic
+from structgenie.errors import ParsingError, ValidationError
+from structgenie.utils.operator.default import parse_default
+from structgenie.utils.parsing import (
     parse_yaml_string,
     dump_to_yaml_string,
     format_inputs,
     prepare_inputs_placeholders
 )
-from structgenie.templates import (
+from structgenie.utils.templates import (
     extract_sections, load_default_template, load_system_config
 )
 
@@ -147,8 +147,8 @@ class StructGenie(BaseModel):
             system_config: Union[dict, str] = None,
             **kwargs) -> "StructGenie":
 
-        from structgenie.prompt.builder import PromptBuilder
-        from structgenie.validation.validator import Validator
+        from structgenie.components.prompt.builder import PromptBuilder
+        from structgenie.components.validation import Validator
 
         kwargs = kwargs or {}
 
@@ -197,7 +197,7 @@ class StructGenie(BaseModel):
         self.instruction = instruction
 
     def set_output_model(self, output_model: OutputModel):
-        from structgenie.validation.validator import Validator
+        from structgenie.components.validation import Validator
         self.prompt_builder.output_model = output_model
         self.validator = Validator.from_output_model(output_model)
         self.output_model = output_model

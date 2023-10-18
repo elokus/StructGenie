@@ -1,7 +1,5 @@
-from .chain import StructChain
-from .genie import StructGenie
+from .genie import StructEngine
 
 __all__ = [
-    "StructGenie",
-    "StructChain",
+    "StructEngine",
 ]

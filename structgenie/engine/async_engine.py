@@ -2,10 +2,10 @@ import asyncio
 from typing import Union, Tuple
 
 from structgenie.base import BaseGenerationDriver
-from structgenie.engine.genie import StructGenie
+from structgenie.engine.genie import StructEngine
 
 
-class AsyncEngine(StructGenie):
+class AsyncEngine(StructEngine):
 
     async def apply(self, input_list: list[dict], **kwargs):
         return await asyncio.gather(*[self.run(input_data, **kwargs) for input_data in input_list])
