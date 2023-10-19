@@ -94,7 +94,6 @@ class Validator(BaseValidator):
             for obj in value:
                 self._validate(obj, validation_config_nested(key, val_config), parent_key=new_parent_key)
 
-
     def _parse_inputs(self, inputs: dict):
         """Parse the inputs to the correct format for validation."""
         val_config = {}

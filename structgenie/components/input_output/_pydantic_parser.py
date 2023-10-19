@@ -41,15 +41,22 @@ def extract_nested(parent_properties: dict, definitions: dict, prefix_key: str =
         lines.extend(extract_properties(parent_properties["properties"], definitions, prefix_key))
         return lines
 
+
+    if has_iterator_key(parent_properties):
+        lines.append(parse_line(prefix_key, parent_properties, prefix_type))
+        prefix_key = prefix_key + "." + get_iterator(parent_properties)
+        prefix_type = None
+        lines.extend(_extract_property(prefix_key, parse_ref(parent_properties[nested_identifier], definitions),
+                                       prefix_type=prefix_type))
+        return lines
+
     # same line identifier
     if prefix_type is None:
         prefix_type = parse_type_from_string(parent_properties.get("type"))
 
-    if has_iterator_key(parent_properties):
-        prefix_key = prefix_key + "." + get_iterator(parent_properties)
     child_props = pass_props_to_child(parent_properties, parse_ref(parent_properties[nested_identifier], definitions))
-    return _extract_property(prefix_key, child_props, definitions, prefix_type=prefix_type)
-
+    lines.extend(_extract_property(prefix_key, child_props, definitions, prefix_type=prefix_type))
+    return lines
 
 def parse_ref(value: dict, definitions: dict):
     if "$ref" in value:
@@ -65,8 +72,9 @@ def extract_properties(properties: dict, definitions: dict = None, prefix_key: s
 
 
 def _extract_property(key: str, value: dict, definitions: dict = None, prefix_key: str = None, prefix_type: str = None):
-    key = prefix_key + "." + key if prefix_key is not None else key
     value = parse_ref(value, definitions)
+    _key = f"${key}" if is_iterator_key(value) else key
+    key = prefix_key + "." + _key if prefix_key is not None else _key
     if is_nested(value):
         return extract_nested(value, definitions, prefix_key=key, prefix_type=prefix_type)
     return [parse_line(key, value, prefix_type=prefix_type)]
@@ -74,6 +82,8 @@ def _extract_property(key: str, value: dict, definitions: dict = None, prefix_ke
 
 # Helpers ---------------------------------------------------------------------
 
+def is_iterator_key(value: dict) -> bool:
+    return value.get("is_iterator", False)
 
 def has_iterator(value: dict):
     return "rule" in value and "$" in value["rule"]
