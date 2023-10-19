@@ -37,7 +37,6 @@ class Validator(BaseValidator):
             self._validate(output, validation_config)
         except Exception as e:
             self.log_error_msg(f"Validator raised error: {e}")
-            raise e
 
         return self.error_log
 
@@ -94,7 +93,6 @@ class Validator(BaseValidator):
             )
             for obj in value:
                 self._validate(obj, validation_config_nested(key, val_config), parent_key=new_parent_key)
-
 
     def _parse_inputs(self, inputs: dict):
         """Parse the inputs to the correct format for validation."""

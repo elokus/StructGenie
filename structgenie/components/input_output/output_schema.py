@@ -129,16 +129,12 @@ def build_output_from_loop(output_model: BaseIOModel, parent_key: str, replace_d
     replace_dict = replace_dict or {}
     iter_key, iter_values = get_loop_config(parent.rule, **replace_dict)
 
-    print("iter_key: ", iter_key)
-    print("iter_values: ", iter_values)
-
     if parent.type == "list" or parent.type.startswith("list"):
         output = []
         for x in iter_values:
             _replace_dict = replace_dict.copy()
             _replace_dict[iter_key] = x
             iter_output = build_output_schema(output_model, parent_key, replace_dict=_replace_dict)
-            print(f"iter_output (x={x}: ", iter_output)
             output.extend(iter_output)
         return output
 
