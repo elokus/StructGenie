@@ -22,15 +22,17 @@ Family.$role.age: <int>
 @pytest.fixture()
 def family_input():
     return {
-        "family_roles": ["father", "mother", "son", "daughter"]
+        "family_roles": ["father", "mother", "son"]
     }
 
 
 def test_for_loop(family_loop_template, family_input):
     engine = StructEngine.from_template(family_loop_template)
-    output, run_metrics = engine.run(family_input)
+    output = engine.run(family_input)
+    member_roles = [[k for k in member.keys()][0] for member in output["family"]]
 
-    assert all([key in family_input["family_roles"] for key in output["family"].keys()])
+    assert all([roles in family_input["family_roles"] for roles in member_roles])
+    assert len(member_roles) == len(family_input["family_roles"])
 
 
 if __name__ == '__main__':

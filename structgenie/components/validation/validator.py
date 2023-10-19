@@ -44,7 +44,9 @@ class Validator(BaseValidator):
     def _validate(self, data: dict, validation_config: dict, parent_key: str = None):
         """Validate the output based on the validation config."""
         error_msg = validate_keys(data, validation_config)
-        self.log_error_msg(error_msg, "key", parent_key)
+        if error_msg:
+            self.log_error_msg(error_msg, "key", parent_key)
+            return
 
         if not isinstance(data, dict):
             return
