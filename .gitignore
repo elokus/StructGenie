@@ -1,0 +1,8 @@
+/.env
+/pyproject.toml
+/.pypirc
+/dist
+/structgenie.egg-info
+/.idea
+/_notebooks
+pytest.ini

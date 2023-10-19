@@ -1,0 +1,7 @@
+# Instruction
+The output from a previous generation task runs into a parsing error. The error is raised during parsing a string output with yaml.load() function.
+This is often caused by a non-ascii character in the output, wrong multiline string format or characters like ":" in the output string that interfere with the yaml format.
+Please try to fix the output provided below so that it can be parsed by yaml.load() function according to following format instructions:
+
+# Input
+Last output: {last_output}
