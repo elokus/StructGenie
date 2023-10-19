@@ -82,7 +82,7 @@ inputs = {
 }
 
 # Run the generation task
-result = genie.run(inputs)
+result, metrics = genie.run(inputs)
 
 # Enjoy your structured result!
 print(result)

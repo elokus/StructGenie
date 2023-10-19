@@ -5,4 +5,4 @@
 /structgenie.egg-info
 /.idea
 /_notebooks
-
+pytest.ini
