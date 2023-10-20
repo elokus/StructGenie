@@ -25,16 +25,21 @@ def fix_split_output(text: str, output_model: OutputModel) -> dict:
 
     # map output to keys
     key_types = [(line.key, line.type) for line in output_model.lines if "." not in line.key]
-    keys_repr = [f"\n{format_as_key(key)}:" for key, _ in key_types]
+    formatted_keys = [f"{format_as_key(key)}:" for key, _ in key_types]
+    key_split_pattern = [f"\n{key}" for key in formatted_keys]
+    key_split_pattern.extend([f"^{key}" for key in formatted_keys])
 
     # split output by keys
-    text_parts = re.split(r"({})".format("|".join(keys_repr)), text)
+    text_parts = re.split(r"(\n{})".format("|".join(key_split_pattern)), text)
+    print("=== text_parts ===")
+    print(text_parts)
+    print("=== end ===")
 
     # parse parts
     output = {}
     for i, part in enumerate(text_parts):
-        if part in keys_repr:
-            key, type_ = key_types[keys_repr.index(part)]
+        if part.strip() in formatted_keys:
+            key, type_ = key_types[formatted_keys.index(part.strip())]
             value = text_parts[i + 1] if i + 1 < len(text_parts) else None
 
             if type_ == "str" or type_ == "multiline":
