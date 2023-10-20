@@ -3,37 +3,37 @@ from structgenie.utils.operator.default_loops import parse_default_in_loop, has_
 from structgenie.utils.parsing import is_none
 
 
-def parse_default(output: dict, output_model: BaseIOModel, **kwargs):
+def parse_default(output_: dict, output_model_: BaseIOModel, **kwargs):
     """Parse default values to output
 
     Args:
-        output (dict): Output dict
-        output_model (OutputModel): OutputModel object
+        output_ (dict): Output dict
+        output_model_ (OutputModel): OutputModel object
         **kwargs: placeholder, value pairs to replace in default and keys
     """
 
-    val_dict = output_model.as_dict
+    val_dict = output_model_.as_dict
 
     if not has_defaults(val_dict):
-        return output
+        return output_
 
     for key in val_dict.keys():
-        if "." in key or "_info" in key or not has_defaults(output_model.get_nested_dict(key)):
+        if "." in key or "_info" in key or not has_defaults(output_model_.get_nested_dict(key)):
             continue
 
-        if has_loop(output_model, key):
-            output[key] = parse_default_in_loop(output, output_model, key, **kwargs)[key]
+        if has_loop(output_model_, key):
+            output_[key] = parse_default_in_loop(output_, output_model_, key, **kwargs)[key]
 
-        elif output_model.get(key).type == "dict":
-            output[key] = parse_default_in_dict(output.get(key, {}), output_model, key, **kwargs)
+        elif output_model_.get(key).type == "dict":
+            output_[key] = parse_default_in_dict(output_.get(key, {}), output_model_, key, **kwargs)
 
-        elif output_model.get(key).type == "list":
-            output[key] = parse_default_in_list(output.get(key, []), output_model, key, **kwargs)
+        elif output_model_.get(key).type == "list":
+            output_[key] = parse_default_in_list(output_.get(key, []), output_model_, key, **kwargs)
 
         else:
-            output[key] = output.get(key) or output_model.get_default(key, **kwargs)
+            output_[key] = output_.get(key) or output_model_.get_default(key, **kwargs)
 
-    return output
+    return output_
 
 
 def parse_default_in_dict(output: dict, output_model: BaseIOModel, parent_key: str, **kwargs):

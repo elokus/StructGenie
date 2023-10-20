@@ -38,12 +38,12 @@ class AsyncEngine(StructEngine):
                 if self.return_metrics:
                     self._log_error(e)
 
-    async def _run(self, inputs: dict, error: Exception, **kwargs) -> dict:
+    async def _run(self, inputs: dict, error_msg: Exception, **kwargs) -> dict:
         """Run the chain.
 
         Args:
             inputs (dict): The inputs for the chain.
-            error (Exception): The error of the previous run.
+            error_msg (Exception): The error of the previous run.
             **kwargs: Keyword arguments for the chain.
 
         Returns:
@@ -52,7 +52,7 @@ class AsyncEngine(StructEngine):
 
         # prepare
         inputs = self.prep_inputs(inputs, **kwargs)
-        prompt = self.prep_prompt(error, **inputs)
+        prompt = self.prep_prompt(error_msg, **inputs)
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
         executor = self.prep_executor(prompt, **kwargs)
 

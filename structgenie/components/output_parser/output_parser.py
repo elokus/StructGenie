@@ -24,7 +24,15 @@ class OutputParser:
         output = self.parse_to_dict(text)
         output = self._prefix_output(output)
         output = self._parse_defaults(output, inputs)
-        return output, self.run_metrics, self.error_log
+
+        run_metrics = [rm for rm in self.run_metrics if rm]
+        error_log = [e for e in self.error_log if e]
+
+        # clear state
+        self.error_log = []
+        self.run_metrics = []
+
+        return output, run_metrics, error_log
 
     def parse_to_dict(self, text: str) -> dict:
         """Parse the generation text output into a dict structure.
@@ -35,8 +43,10 @@ class OutputParser:
             return parse_yaml_string(text)
         except Exception as e:
             self._debug("Yaml parsing error", str(e))
-            self.error_log.append(YamlParsingError(str(e)))
-            return self.fixing_parser(text)
+            try:
+                return self.fixing_parser(text)
+            except Exception as e:
+                self.error_log.append(YamlParsingError(str(e)))
 
     def fixing_parser(self, text: str) -> dict:
         try:

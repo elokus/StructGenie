@@ -10,8 +10,9 @@ def validation_config_from_output_schema(output_schema: Union[dict, list]) -> di
     return output_schema
 
 
-def build_output_schema(output_model: BaseIOModel, parent_key: str = None, replace_dict: dict = None,
-                        inputs: dict = None):
+def build_output_schema(
+        output_model: BaseIOModel, parent_key: str = None, replace_dict: dict = None, inputs: dict = None
+) -> Union[dict, list, str]:
     if inputs:
         replace_dict = _replace_dict_from_inputs(inputs, replace_dict)
         # print("Replace dict: ", replace_dict)

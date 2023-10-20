@@ -63,5 +63,35 @@ def test_output_parser_with_llm(generated_text_with_llm_error, test_output_model
     assert len(error_log) >= 1
 
 
+def test_output_parser_duplicate_keys():
+    output = """
+    Reasoning: The input is a valid SMILES string. Reasoning: values according to something else
+    Result: The input is a valid SMILES string.
+    ```yaml
+    Reasoning: The input is a valid SMILES string from below. values according to something else
+    Result: The input is a valid SMILES string.
+    ```"""
+    output_model = OutputModel.from_string("Reasoning: <str>\nResult: <str>")
+    parser = OutputParser(output_model)
+    output, run_metrics, error_log = parser.parse(output, {})
+
+    print(output)
+    assert error_log == []
+
+
+def test_output_parser_duplicate_keys():
+    output = """
+Reasoning: The input is a valid SMILES string. Reasoning: values according to something else
+Result: The input is a valid SMILES string.
+"""
+    output_model = OutputModel.from_string("Reasoning: <str>\nResult: <str>")
+    parser = OutputParser(output_model)
+    output, run_metrics, error_log = parser.parse(output, {})
+
+    print(output)
+    assert error_log == []
+
+
+
 if __name__ == '__main__':
     pytest.main()

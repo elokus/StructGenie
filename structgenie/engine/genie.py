@@ -1,7 +1,7 @@
 from structgenie.base import BaseGenerationDriver
 from structgenie.components.output_parser.output_parser import OutputParser
 from structgenie.engine.base import BaseEngine
-from structgenie.errors import ParsingError, ValidationError
+from structgenie.errors import ParsingError, ValidationError, EngineRunError, MaxRetriesError
 from structgenie.utils.parsing import (
     dump_to_yaml_string,
     format_inputs,
@@ -26,34 +26,46 @@ class StructEngine(BaseEngine):
 
         """
         self.last_error = None
+        error_index = 0
 
         n_run = 0
         while n_run <= self.max_retries:
             try:
-                output = self._run(inputs, self.last_error, **kwargs)
+                output = self._run(inputs, error_msg=self.last_error, **kwargs)
                 if self.return_metrics:
                     return output, self.run_metrics
                 return output
 
             except Exception as e:
 
-                self.last_error = e
-                n_run += 1
-                if self.debug:
-                    print(f"Error: {e}")
-                    raise e
-                if self.return_metrics:
-                    self._log_error(e)
-                if n_run > self.max_retries:
-                    print(self.run_metrics["errors"])
-                    raise e
+                e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
+                self._log_error(e)
 
-    def _run(self, inputs: dict, error: Exception, **kwargs):
+                # prepare error remarks
+                if len(self.run_metrics["errors"]) > error_index:
+                    new_errors = [er for er in self.run_metrics["errors"][error_index:]]
+                    prompt_errors = [
+                        str(er) for er in new_errors if isinstance(er, ParsingError) or isinstance(er, ValidationError)
+                    ]
+                    error_index = len(self.run_metrics["errors"])
+                    self.last_error = "\n - ".join(prompt_errors)
+
+                self._debug(
+                    f"Run Error #{n_run}/{self.max_retries}",
+                    raised=str(e),
+                )
+                n_run += 1
+
+        e = MaxRetriesError(f"exceeded max retries: {self.max_retries}")
+        self._log_error(e)
+        raise e
+
+    def _run(self, inputs: dict, error_msg: str, **kwargs):
         """Run the chain.
 
         Args:
             inputs (dict): The inputs for the chain.
-            error (Exception): The error of the previous run.
+            error_msg (Exception): The error of the previous run.
             **kwargs: Keyword arguments for the chain.
 
         Returns:
@@ -62,7 +74,7 @@ class StructEngine(BaseEngine):
 
         # prepare
         inputs = self.prep_inputs(inputs, **kwargs)
-        prompt = self.prep_prompt(error, **inputs)
+        prompt = self.prep_prompt(error_msg, **inputs)
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
         self._debug(
             "Prompt",
@@ -72,6 +84,9 @@ class StructEngine(BaseEngine):
         # generate
         executor = self.prep_executor(prompt, **kwargs)
         text, run_metrics = self._call_executor(executor, inputs_)
+        self._log_metrics(run_metrics)
+
+        self.last_output = text
         self._debug(
             "Execution",
             generation_output=text,
@@ -85,26 +100,35 @@ class StructEngine(BaseEngine):
 
         return output
 
-    def prep_prompt(self, error: Exception = None, **kwargs) -> str:
+    def prep_prompt(self, error_msg: str = None, **kwargs) -> str:
         """Prepare the prompt for the chain.
 
         Args:
-            error (Exception): The error message.
+            error_msg (Exception): The error message.
             **kwargs: Keyword arguments for the prompt.
 
         Returns:
             str: The prompt.
         """
-        if error is None:
+        if error_msg is None:
             return self.prompt_builder.build(**kwargs)
 
-        if isinstance(error, ParsingError):
-            return self.prompt_builder.fix_parsing(error=str(error), **kwargs)
+        error_remark = (
+            "---\n"
+            f"During last generation, errors were encountered for following output:\n{self.last_output}\n\n"
+            f"{error_msg}\n"
+            "---\n"
+        )
 
-        if isinstance(error, ValidationError):
-            return self.prompt_builder.fix_validation(error=str(error), **kwargs)
+        return self.prompt_builder.build(error=error_remark, **kwargs)
 
-        return self.prompt_builder.build(**kwargs)
+        # if isinstance(error, ParsingError):
+        #     return self.prompt_builder.fix_parsing(error=str(error), **kwargs)
+        #
+        # if isinstance(error, ValidationError):
+        #     return self.prompt_builder.fix_validation(error=str(error), **kwargs)
+        #
+        # return self.prompt_builder.build(**kwargs)
 
     def prep_executor(self, prompt: str, **kwargs) -> BaseGenerationDriver:
         """Prepare the executor for the chain.
@@ -184,7 +208,9 @@ class StructEngine(BaseEngine):
 
         validation_errors = self.validator.validate(output, inputs)
         if validation_errors:
-            raise ValidationError(f"Validation failed with errors:\n{validation_errors}", output)
+            for error in validation_errors:
+                self._log_error(error)
+            raise ValidationError("Validation failed with errors")
 
     # === helpers ===
 

@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 from structgenie.components.input_output import OutputModel
 from structgenie.components.validation.validator import Validator
-from structgenie.errors import ValidationKeyError, ValidationTypeError, ValidatorExecutionError
+from structgenie.errors import ValidationKeyError, ValidationTypeError, ValidatorExecutionError, ValidationRuleError
 
 
 @pytest.fixture()
@@ -59,7 +59,6 @@ def test_validation_simple():
     assert not errors
 
 
-
 def test_validator_key_error(output_model_simple):
     output = {"reasoning": "I am a robot", "result": "I am a string"}
     validator = Validator.from_output_model(output_model_simple)
@@ -83,7 +82,6 @@ def test_validator_nested(output_model_nested):
     }}
     validator = Validator.from_output_model(output_model_nested)
     errors = validator.validate(output, {})
-    print(errors)
     assert not errors
 
 
@@ -118,6 +116,65 @@ def test_validator_nested_list_error(output_model_nested_list):
     validator = Validator.from_output_model(output_model_nested_list)
     errors = validator.validate(output, {})
     assert any([isinstance(error, ValidationKeyError) for error in errors])
+
+
+def test_validator_with_placeholder():
+    class BookInput(BaseModel):
+        book_title: str
+        book_author: str
+        release_year: int
+
+    class OutputObject(BaseModel):
+        book_data: list[BookInput] = Field(rule="for each $book in {book_list}")
+
+    output_model = OutputModel.from_pydantic(OutputObject)
+    validator = Validator.from_output_model(output_model)
+    book_list = ["Harry Potter", "Lord of the Rings"]
+    output = {"book_data": [
+        {"book_title": "Harry Potter", "book_author": "J.K. Rowling", "release_year": 1997},
+        {"book_title": "Lord of the Rings", "book_author": "J.R.R. Tolkien", "release_year": 1954}
+    ]}
+
+    assert not validator.validate(output, {"book_list": book_list})
+
+
+def test_validator_with_placeholder_error():
+    class BookInput(BaseModel):
+        book_title: str
+        book_author: str
+        release_year: int
+
+    class OutputObject(BaseModel):
+        book_data: list[BookInput] = Field(rule="for each $book in {book_list}")
+
+    output_model = OutputModel.from_pydantic(OutputObject)
+    validator = Validator.from_output_model(output_model)
+    book_list = ["Harry Potter", "Lord of the Rings", "The Bible"]
+    output = {"book_data": [
+        {"book_title": "Harry Potter", "book_author": "J.K. Rowling", "release_year": 1997},
+        {"book_title": "Lord of the Rings", "book_author": "J.R.R. Tolkien", "release_year": 1954}
+    ]}
+    errors = validator.validate(output, {"book_list": book_list})
+    assert len(errors) == 1
+    assert isinstance(errors[0], ValidationRuleError)
+
+
+def test_instruction_validation_error():
+    output_model = OutputModel.from_string("Reasoning: <str>\nInstruction: <str>")
+    output = {"reasoning": "I am a robot"}
+
+    validator = Validator.from_output_model(output_model)
+    errors = validator.validate(output, {})
+    assert len(errors) == 1
+
+
+def test_instruction_validation():
+    output = {'reasoning': 'I knew it all along.', 'instruction': 'Do it again.'}
+    output_model = OutputModel.from_string("Reasoning: <str>\nInstruction: <str>")
+
+    validator = Validator.from_output_model(output_model)
+    errors = validator.validate(output, {})
+    assert not errors
 
 
 if __name__ == '__main__':

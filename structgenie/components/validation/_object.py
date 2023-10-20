@@ -26,11 +26,11 @@ def validate_keys(d: dict, val_config: dict) -> Union[str, None]:
     return None
 
 
-def nested_key_validation(key: str, value: any, output_model: BaseIOModel = None):
+def nested_key_validation(key: str, value: any, output_model: BaseIOModel = None, inputs: dict = None):
     errors = []
 
     if output_model and not key.startswith("$"):
-        schema = build_output_schema(output_model)
+        schema = build_output_schema(output_model, inputs=inputs)
         for i, _k in enumerate(key.split(".")):
             schema = schema[_k]
         if isinstance(schema, list):

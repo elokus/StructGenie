@@ -101,7 +101,7 @@ class PromptBuilder(BasePromptBuilder):
         return parse_section_placeholder(template, set_tags=self._set_format_tags,
                                          format_instructions=format_instructions)
 
-    def _prep_remarks(self, template: str, error: Exception = None, remarks: str = None):
+    def _prep_remarks(self, template: str, error: str = None, remarks: str = None):
         """Prepare remarks"""
         if not remarks:
             remarks = self.remarks or ""

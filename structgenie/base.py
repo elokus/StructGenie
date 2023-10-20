@@ -176,7 +176,7 @@ class BaseValidator(ABC):
     """
 
     @abstractmethod
-    def validate(self, output: Union[str, dict], inputs: dict) -> Union[str, None]:
+    def validate(self, output: Union[str, dict], inputs: dict) -> Union[list, None]:
         pass
 
 

@@ -20,6 +20,7 @@ class Validator(BaseValidator):
         self.validation_config = validation_config
         self.output_model = output_model
         self.error_log = []
+        self.inputs = {}
 
     @classmethod
     def from_output_model(cls, output_model: BaseIOModel):
@@ -28,10 +29,10 @@ class Validator(BaseValidator):
 
     def validate(self, output: dict, inputs: dict = None) -> Union[list, None]:
         """Validate the output based on the validation config."""
-        if inputs is None:
-            inputs = {}
+        if inputs:
+            self.inputs = inputs
 
-        validation_config = self._parse_inputs(inputs)
+        validation_config = self._parse_inputs(self.inputs)
 
         try:
             self._validate(output, validation_config)
@@ -39,7 +40,10 @@ class Validator(BaseValidator):
             self.log_error_msg(f"Validator raised error: {e}")
             raise e
 
-        return self.error_log
+        error_log = [error for error in self.error_log if error]
+        self.error_log = []
+        self.inputs = {}
+        return error_log
 
     def _validate(self, data: dict, validation_config: dict, parent_key: str = None):
         """Validate the output based on the validation config."""
@@ -86,13 +90,15 @@ class Validator(BaseValidator):
 
         if isinstance(value, dict):
             self.log_error_msg(
-                nested_key_validation(key, value, self.output_model), "key", parent_key=new_parent_key
+                nested_key_validation(key, value, self.output_model, inputs=self.inputs), "key",
+                parent_key=new_parent_key
             )
             return self._validate(value, validation_config_nested(key, val_config), parent_key=new_parent_key)
 
         elif isinstance(value, list):
             self.log_error_msg(
-                nested_key_validation(key, value, self.output_model), "key", parent_key=new_parent_key
+                nested_key_validation(key, value, self.output_model, inputs=self.inputs), "key",
+                parent_key=new_parent_key
             )
             for obj in value:
                 self._validate(obj, validation_config_nested(key, val_config), parent_key=new_parent_key)

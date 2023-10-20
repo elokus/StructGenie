@@ -54,10 +54,12 @@ class BaseEngine(BaseModel, ABC):
     examples: ExampleSelector = None
     instruction: str = None
     debug: bool = False
-    return_metrics: bool = False
+    raise_errors: bool = False
+    return_metrics: bool = True
 
     # run states
-    last_error: Union[Exception, None] = None
+    last_error: Union[str, None] = None
+    last_output: Union[str, None] = None
     partial_variables: dict = None
 
     return_reasoning: bool = False
@@ -221,6 +223,9 @@ class BaseEngine(BaseModel, ABC):
         Remarks: Model name and config are only logged if not already set because output_fixing run
         could have different model and config.
         """
+
+        if not metrics:
+            metrics = {}
 
         inc_fr = 0 if self.num_metrics_logged == 0 else 1
 
