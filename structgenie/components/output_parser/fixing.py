@@ -31,9 +31,6 @@ def fix_split_output(text: str, output_model: OutputModel) -> dict:
 
     # split output by keys
     text_parts = re.split(r"(\n{})".format("|".join(key_split_pattern)), text)
-    print("=== text_parts ===")
-    print(text_parts)
-    print("=== end ===")
 
     # parse parts
     output = {}
