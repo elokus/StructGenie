@@ -44,6 +44,22 @@ def output_model_nested_list():
     return OutputModel.from_pydantic(Output)
 
 
+def test_validation_simple():
+    output = {
+        'reasoning': 'The task involves taking an input object with keys "book_title", "book_author", and "release_year" and producing an output object with a key "Genre" and a value that is a string. The value of "Genre" should be selected from a predefined list of options and should not allow multiple selections. The value should not be a multiline string.',
+        'instruction': 'Extract the genre of the book based on its title, author, and release year. The genre should be selected from the options of "fiction", "non-fiction", "fantasy", "sci-fi", "romance", "thriller", "horror", or "other".'}
+
+    class OutputObject(BaseModel):
+        reasoning: str
+        instruction: str
+
+    output_model = OutputModel.from_pydantic(OutputObject)
+    validator = Validator.from_output_model(output_model)
+    errors = validator.validate(output, {})
+    assert not errors
+
+
+
 def test_validator_key_error(output_model_simple):
     output = {"reasoning": "I am a robot", "result": "I am a string"}
     validator = Validator.from_output_model(output_model_simple)
