@@ -30,7 +30,7 @@ def fix_split_output(text: str, output_model: OutputModel) -> dict:
     key_split_pattern.extend([f"^{key}" for key in formatted_keys])
 
     # split output by keys
-    text_parts = re.split(r"(\n{})".format("|".join(key_split_pattern)), text)
+    text_parts = re.split(r"({})".format("|".join(key_split_pattern)), text)
 
     # parse parts
     output = {}
@@ -47,7 +47,7 @@ def fix_split_output(text: str, output_model: OutputModel) -> dict:
                     output[key] = parse_yaml_string(part + value)[key]
                 except Exception as e:
                     output[key] = ParsingPartialError(
-                        f"Error while parsing output for key '{format_as_key(key)}'."
+                        f"Error while parsing output for key '{format_as_key(key)}'.\n"
                         f"Output: {part + value}"
                     )
     return output
@@ -65,7 +65,7 @@ def llm_output_fixing_partial(error_msg: str, key: str, output_model: OutputMode
     engine.fix_parsing_by_llm = False
     engine.return_metrics = True
     try:
-        return engine.run(inputs=dict(error_msg=error_msg))
+        return engine.run(inputs=dict(error_str=error_msg))
     except Exception as e:
         raise ParsingFixingError(f"Error while fixing partial parsing error for key '{key}'. Error: {e}")
 

@@ -72,7 +72,7 @@ class ParsingError(Exception):
     def __str__(self):
         if self.generated_text:
             return f"{self.__class__.__name__}( {self.msg} > From parsing {self.generated_text} )"
-        return f"{self.__class__.__name__})( {self.msg} )"
+        return f"{self.__class__.__name__}( {self.msg} )"
 
 
 class ParsingPartialError(ParsingError):

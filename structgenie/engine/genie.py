@@ -9,11 +9,13 @@ from structgenie.utils.parsing import (
 )
 
 
+# TODO: define blocked input keys: error_msg, error, input, input_schema, input_model, output_schema, output_model
+
 class StructEngine(BaseEngine):
 
     # === Run ===
 
-    def run(self, inputs: dict, **kwargs):
+    def run(self, inputs: dict, raise_error: bool = False, **kwargs):
         """Run the chain.
 
         Args:
@@ -37,7 +39,8 @@ class StructEngine(BaseEngine):
                 return output
 
             except Exception as e:
-
+                if raise_error:
+                    raise e
                 e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
                 self._log_error(e)
 

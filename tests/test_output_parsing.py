@@ -3,6 +3,7 @@ import pytest
 from pydantic import BaseModel
 
 from structgenie.components.input_output import OutputModel
+from structgenie.components.output_parser.fixing import fix_split_output
 from structgenie.components.output_parser.output_parser import OutputParser
 
 
@@ -38,6 +39,14 @@ def test_output_model():
     return OutputModel.from_pydantic(Output)
 
 
+def test_fix_split_output(generated_text, test_output_model):
+    output = fix_split_output(generated_text, test_output_model)
+    assert output == {
+        "reasoning": "The input is a valid SMILES string. Meta: values according to something else",
+        "result": "The input is a valid SMILES string.",
+        "meta": {"key": "value", "key2": "value2"},
+    }
+
 def test_output_parser(generated_text, test_output_model):
     parser = OutputParser(test_output_model)
     output, run_metrics, error_log = parser.parse(generated_text, {})
@@ -47,7 +56,7 @@ def test_output_parser(generated_text, test_output_model):
         "meta": {"key": "value", "key2": "value2"},
     }
     assert run_metrics == []
-    assert len(error_log) == 1
+    assert len(error_log) == 0
 
 
 def test_output_parser_with_llm(generated_text_with_llm_error, test_output_model):

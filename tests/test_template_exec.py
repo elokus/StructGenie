@@ -28,7 +28,7 @@ def family_input():
 
 def test_for_loop(family_loop_template, family_input):
     engine = StructEngine.from_template(family_loop_template)
-    output = engine.run(family_input)
+    output, _ = engine.run(family_input)
     member_roles = [[k for k in member.keys()][0] for member in output["family"]]
 
     assert all([roles in family_input["family_roles"] for roles in member_roles])

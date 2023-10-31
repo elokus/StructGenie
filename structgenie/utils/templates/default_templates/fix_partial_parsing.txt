@@ -3,4 +3,4 @@ The output from a previous generation task runs into a parsing error. The error 
 It is required to fix the error and make the code work.
 
 # Input
-Error message: {error_msg}
+Error message: {error_str}

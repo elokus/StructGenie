@@ -72,3 +72,7 @@ def test_max_retries(mocker, template):
     print(error)
 
     assert isinstance(error, MaxRetriesError)
+
+
+if __name__ == '__main__':
+    pytest.main()

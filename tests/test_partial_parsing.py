@@ -28,3 +28,7 @@ def test_partial_parsing(output_model, output):
     text = fix_split_output(output, output_model)
     print(text)
     assert all([key in text.keys() for key in ["reasoning", "instruction"]])
+
+
+if __name__ == '__main__':
+    pytest.main()
