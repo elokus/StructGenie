@@ -13,19 +13,21 @@ def load_langchain_llm(model_name: str, **kwargs):
     return ChatOpenAI(model_name=model_name, **kwargs)
 
 
+
 class LangchainDriver(BaseGenerationDriver):
     """Langchain Driver class"""
     executor: LLMChain = None
     model_name: str = "gpt-3.5-turbo"
     chain_kwargs: dict = {}
     llm_kwargs: dict = {}
+    load_llm = load_langchain_llm
 
-    def load_llm(self, model_name: str = None, **kwargs) -> ChatOpenAI:
+    def call_load_llm(self, model_name: str = None, **kwargs) -> ChatOpenAI:
         model_name = model_name or self.model_name
         llm_kwargs_ = self.llm_kwargs.copy()
         if kwargs:
             llm_kwargs_.update(kwargs)
-        return load_langchain_llm(model_name=model_name, **llm_kwargs_)
+        return self.load_llm(model_name=model_name, **llm_kwargs_)
 
     @classmethod
     def load_driver(
@@ -38,7 +40,7 @@ class LangchainDriver(BaseGenerationDriver):
         cls_ = cls()
 
         llm_kwargs = llm_kwargs or {}
-        llm = cls_.load_llm(model_name=model_name, **llm_kwargs)
+        llm = cls_.call_load_llm(model_name=model_name, **llm_kwargs)
 
         chain_kwargs_ = cls_.chain_kwargs.copy()
         if kwargs:

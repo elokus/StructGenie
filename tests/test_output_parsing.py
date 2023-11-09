@@ -88,7 +88,7 @@ def test_output_parser_duplicate_keys():
     assert error_log == []
 
 
-def test_output_parser_duplicate_keys():
+def test_output_parser_duplicate_keys_2():
     output = """
 Reasoning: The input is a valid SMILES string. Reasoning: values according to something else
 Result: The input is a valid SMILES string.

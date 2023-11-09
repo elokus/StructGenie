@@ -39,7 +39,7 @@ class StructEngine(BaseEngine):
                 return output
 
             except Exception as e:
-                if raise_error:
+                if raise_error or self.raise_errors:
                     raise e
                 e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
                 self._log_error(e)
@@ -113,8 +113,9 @@ class StructEngine(BaseEngine):
         Returns:
             str: The prompt.
         """
+        is_chat_mode = self.driver.prompt_mode() == "chat"
         if error_msg is None:
-            return self.prompt_builder.build(**kwargs)
+            return self.prompt_builder.build(chat_mode=is_chat_mode, **kwargs)
 
         error_remark = (
             "---\n"
@@ -123,7 +124,7 @@ class StructEngine(BaseEngine):
             "---\n"
         )
 
-        return self.prompt_builder.build(error=error_remark, **kwargs)
+        return self.prompt_builder.build(error=error_remark, chat_mode=is_chat_mode, **kwargs)
 
         # if isinstance(error, ParsingError):
         #     return self.prompt_builder.fix_parsing(error=str(error), **kwargs)
@@ -133,7 +134,7 @@ class StructEngine(BaseEngine):
         #
         # return self.prompt_builder.build(**kwargs)
 
-    def prep_executor(self, prompt: str, **kwargs) -> BaseGenerationDriver:
+    def prep_executor(self, prompt: str, chat_prompt: dict = None, **kwargs) -> BaseGenerationDriver:
         """Prepare the executor for the chain.
 
         Args:

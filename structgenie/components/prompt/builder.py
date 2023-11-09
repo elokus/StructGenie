@@ -7,7 +7,8 @@ from structgenie.components.prompt._templates import (
     DEFAULT_TEMPLATE,
     DEFAULT_SCHEMA_TEMPLATE,
     FORMAT_INSTRUCTIONS_TEMPLATE,
-    ERROR_TEMPLATE
+    ERROR_TEMPLATE,
+    CHAT_TEMPLATE
 )
 from structgenie.utils.parsing import replace_placeholder, parse_section_placeholder, dump_to_yaml_string
 
@@ -16,6 +17,7 @@ class PromptBuilder(BasePromptBuilder):
     """Prompt Builder class"""
 
     prompt_template: str = DEFAULT_TEMPLATE
+    chat_template: str = CHAT_TEMPLATE
     schema_template: str = DEFAULT_SCHEMA_TEMPLATE
     format_template: str = FORMAT_INSTRUCTIONS_TEMPLATE
     error_template: str = ERROR_TEMPLATE
@@ -63,9 +65,12 @@ class PromptBuilder(BasePromptBuilder):
         )
         return template
 
-    def build(self, error: Exception = None, remarks: str = None, **kwargs) -> str:
+    def build(self, error: Exception = None, remarks: str = None, chat_mode: bool = False, **kwargs) -> str:
         """Build prompt"""
-        template = self.prompt_template
+        if chat_mode:
+            template = self.chat_template
+        else:
+            template = self.prompt_template
         template = self._prep_instruction(template)
         template = self._prep_examples(template)
         template = self._prep_format_instructions(template, **kwargs)
@@ -88,8 +93,11 @@ class PromptBuilder(BasePromptBuilder):
         if not self.examples:
             return self._pass_placeholder(template, examples="")
 
-        return parse_section_placeholder(template, set_tags=self._set_example_tags,
-                                         examples=self.examples.to_prompt(**kwargs))
+        return parse_section_placeholder(
+            template,
+            set_tags=self._set_example_tags,
+            examples=self.examples.to_prompt(**kwargs)
+        )
 
     def _prep_format_instructions(self, template: str, **kwargs):
         """Prepare format instructions"""
@@ -98,8 +106,11 @@ class PromptBuilder(BasePromptBuilder):
             response_schema=dump_to_yaml_string(build_output_schema(self.output_model, inputs=kwargs))
         )
 
-        return parse_section_placeholder(template, set_tags=self._set_format_tags,
-                                         format_instructions=format_instructions)
+        return parse_section_placeholder(
+            template,
+            set_tags=self._set_format_tags,
+            format_instructions=format_instructions
+        )
 
     def _prep_remarks(self, template: str, error: str = None, remarks: str = None):
         """Prepare remarks"""

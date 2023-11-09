@@ -182,6 +182,10 @@ class BaseValidator(ABC):
 
 class BaseGenerationDriver(ABC):
 
+    @classmethod
+    def prompt_mode(cls):
+        return "completion"
+
     @abstractmethod
     def predict(self, **kwargs) -> str:
         """Generate the text.
@@ -218,6 +222,10 @@ class BaseGenerationDriver(ABC):
     @abstractmethod
     def load_driver(cls, prompt: Union[str, Any], **kwargs):
         pass
+
+
+class BaseChatGenerationDriver(BaseGenerationDriver, ABC):
+    pass
 
 
 class BaseExample(BaseModel, ABC):

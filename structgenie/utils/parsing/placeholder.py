@@ -6,18 +6,18 @@ def has_placeholder(text: str):
     return bool(re.search(r"{.*?}", text, re.DOTALL))
 
 
-def replace_placeholder(template: str, set_tags: bool = False, **kwargs):
+def replace_placeholder(template: str, set_tags: bool = False, with_end_tag: bool = False, **kwargs):
     for key, value in kwargs.items():
         if not value:
             value = ""
         elif set_tags:
-            value = _parse_section_in_tags(value, key)
+            value = _parse_section_in_tags(value, key, with_end_tag=with_end_tag)
         template = template.replace(f"{{{key}}}", str(value))
     return template
 
 
-def parse_section_placeholder(template, set_tags=True, **kwargs):
-    return replace_placeholder(template, set_tags=set_tags, **kwargs)
+def parse_section_placeholder(template, set_tags=True, with_end_tag: bool = False, **kwargs):
+    return replace_placeholder(template, set_tags=set_tags, with_end_tag=with_end_tag, **kwargs)
 
 
 def _parse_section_in_tags(content: str, tag: str, with_end_tag: bool = False):

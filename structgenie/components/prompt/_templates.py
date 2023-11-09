@@ -4,6 +4,18 @@ DEFAULT_TEMPLATE = """{instruction}
 {remarks}
 {input}
 """
+CHAT_TEMPLATE = """<%system%>
+{instruction}
+{format_instructions}
+</%system%>
+<%examples%>
+{examples}
+</%examples%>
+<%user%>
+{remarks}
+{input}
+</%user%>"""
+
 DEFAULT_SCHEMA_TEMPLATE = """{instruction}
 {examples}
 {remarks}
