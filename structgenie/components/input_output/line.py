@@ -25,6 +25,7 @@ PROMPT_INPUT_TEMPLATE = "{prompt_key}: {{{key}}}"
 TYPE_NOTATION_TEMPLATE_LEGACY = "<{type} ({rule})> = {default}"
 TYPE_NOTATION_TEMPLATE = "{prompt_key}: <{type}{kwargs}>"
 
+HIDDEN_TYPES = ["image", "file"]
 
 class IOLine(BaseIOLine):
     """Represents an input or output line in the final prompt/output."""
@@ -37,6 +38,7 @@ class IOLine(BaseIOLine):
     multiple_select: bool = False
     multiline: bool = False
     custom_value_template: Optional[str] = None
+    hidden: bool = False
 
     # === validators ===
 
@@ -53,6 +55,8 @@ class IOLine(BaseIOLine):
             values["type"] = "str"
         if values.get("enum"):
             values["options"] = values.pop("enum")
+        if values.get("key").startswith("_") or values.get("type") in HIDDEN_TYPES:
+            values["hidden"] = True
         return values
 
     @validator("options", pre=True, always=True)

@@ -41,7 +41,7 @@ class InputModel(IOModel):
         return "\n".join([line.to_type_notation() for line in self.lines])
 
     def dump_to_prompt(self, inputs: dict, **kwargs):
-        input_dict = {line.key: line.prompt_value(inputs, **kwargs) for line in self.lines}
+        input_dict = {line.key: line.prompt_value(inputs, **kwargs) for line in self.lines if not line.hidden}
         return dump_to_yaml_string(input_dict)
 
     # legacy

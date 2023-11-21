@@ -14,7 +14,7 @@ from structgenie.components.input_output import (
     load_input_model,
     init_input_model
 )
-from structgenie.driver import LangchainDriverBasic
+from structgenie.driver.openai import OpenAIDriver
 from structgenie.utils.templates import (
     extract_sections, load_default_template, load_system_config
 )
@@ -34,7 +34,7 @@ class BaseEngine(BaseModel, ABC):
     run_metrics: dict = DEFAULT_RUN_METRICS
 
     # executor
-    driver: Type[BaseGenerationDriver] = LangchainDriverBasic
+    driver: Type[BaseGenerationDriver] = OpenAIDriver
 
     # prompt
     prompt_builder: BasePromptBuilder = None

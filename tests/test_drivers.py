@@ -1,6 +1,7 @@
 import pytest
 
 from structgenie.driver.openai import OpenAIDriver
+from structgenie.driver.openai_vision import OpenAIDriverVision
 from structgenie.utils.helper import build_prompt_from_template
 from structgenie.utils.parsing import dump_to_yaml_string
 
@@ -48,3 +49,21 @@ def test_for_loop_driver_metrics(family_loop_template, family_input):
     print(metrics)
     assert isinstance(output, str)
     assert isinstance(metrics, dict)
+
+
+def test_vision_driver():
+    template = """Create a list of all groceries found in the images below
+    
+    Begin!
+    _image: <image>
+    ---
+    Grocery List: <list[str>
+    """
+    prompt = build_prompt_from_template(template, chat_mode=True)
+    inputs = {"input": "",
+              "image_path": "https://media.moemax.com/i/moemax/PIhZbgg1LUzKWNJJjWVdN22A/?fmt=auto&%24hq%24=&w=1200"}
+
+    driver = OpenAIDriverVision.load_driver(prompt, llm_kwargs={"max_tokens": 1000})
+    output = driver.predict(**inputs)
+    print(output)
+    assert isinstance(output, str)

@@ -8,10 +8,11 @@ from typing import Any, Union, Tuple
 import openai
 
 from structgenie.base import BaseGenerationDriver
-from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message
+from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message, \
+    create_chat_message_with_image, parse_image_path
 
 
-class OpenAIDriver(BaseGenerationDriver):
+class OpenAIDriverVision(BaseGenerationDriver):
     """OpenAI Chat Driver
 
     Utilizes the OpenAI Chat API with structgenie prompt schema.
@@ -28,7 +29,7 @@ class OpenAIDriver(BaseGenerationDriver):
     def load_driver(
             cls,
             prompt: Union[str, Any],
-            model_name: str = "gpt-3.5-turbo",
+            model_name: str = "gpt-4-vision-preview",
             llm_kwargs: dict = None,
             **kwargs):
         """Load the driver.
@@ -46,7 +47,7 @@ class OpenAIDriver(BaseGenerationDriver):
         cls_.llm_kwargs = llm_kwargs or {}
         return cls_
 
-    def parse_prompt(self, **kwargs) -> list[dict]:
+    def parse_prompt(self, image_path: str = None, **kwargs) -> list[dict]:
         # add inputs to prompt
         prompt = self.prompt.format(**kwargs)
 
@@ -59,8 +60,13 @@ class OpenAIDriver(BaseGenerationDriver):
         messages = [create_chat_message("system", system_message)]
         if examples:
             messages.extend(create_examples_messages(examples))
-        messages.append(create_chat_message("user", user_message))
 
+        if image_path:
+            messages.append(create_chat_message_with_image(
+                "user", user_message, image_url=parse_image_path(image_path))
+            )
+        else:
+            messages.append(create_chat_message("user", user_message))
         return messages
 
     def completion(self, **kwargs):
