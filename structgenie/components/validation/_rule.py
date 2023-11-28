@@ -93,7 +93,7 @@ def one_or_more(output: Union[str, list], possible_values: list[str]):
         #     return None
         return f"Output '{output}' is not one of the possible values: {possible_values}"
     if not all([o in possible_values for o in output]):
-        return f"Output '{output}' does not contain one of the possible values: {possible_values}"
+        return f"Output '{output}' does not contain one or more of possible values: {possible_values}"
     return None
 
 

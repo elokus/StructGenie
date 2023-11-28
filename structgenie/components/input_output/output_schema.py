@@ -47,7 +47,7 @@ def build_output_schema(
         output = []
         inner = {}
         if not attributes:
-            if parent_key and output_model.get(parent_key).rule:
+            if parent_key and (output_model.get(parent_key).rule or output_model.get(parent_key).options):
                 return _output_item_value(output_model.get(parent_key), replace_dict)
             else:
                 output.append("...")

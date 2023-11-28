@@ -182,6 +182,8 @@ class BaseValidator(ABC):
 
 class BaseGenerationDriver(ABC):
 
+    max_retries: int = 4
+
     @classmethod
     def prompt_mode(cls):
         return "completion"

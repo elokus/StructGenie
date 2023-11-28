@@ -47,9 +47,11 @@ def _nested_key_validation(value: any, output_model: BaseIOModel = None, schema:
     if not isinstance(schema, dict):
         return errors
 
-    for k, v in schema.items():
+    for k_, v in schema.items():
+        k = k_[1:] if k_.startswith("$") else k_
+
         if isinstance(value, list) and isinstance(value[0], dict):
-            value_ = [v_ for v_ in value if k in v_][0]
+                value_ = [v_ for v_ in value if k in v_][0]
         else:
             value_ = value
 

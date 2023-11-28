@@ -15,6 +15,7 @@ from structgenie.components.input_output import (
     init_input_model
 )
 from structgenie.driver.openai import OpenAIDriver
+from structgenie.errors import EngineRunError, ParsingError, ValidationError
 from structgenie.utils.templates import (
     extract_sections, load_default_template, load_system_config
 )
@@ -243,7 +244,7 @@ class BaseEngine(BaseModel, ABC):
 
     def _log_error(self, error: Exception):
         """Log error in run_metrics."""
-        self.run_metrics["errors"].append(str(error))
+        self.run_metrics["errors"].append(error)
 
     # TODO: Add debug logging to file
     def _debug(self, step_context: str, **kwargs):
@@ -277,3 +278,28 @@ class BaseEngine(BaseModel, ABC):
             result, run_metrics = executor.predict(**inputs), None
 
         return result, run_metrics
+
+    # === Error Handling ===
+
+    def _on_run_error(self, e, error_index, n_run, raise_error):
+        if raise_error or self.raise_errors:
+            raise e
+        e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
+        self._log_error(e)
+        # prepare error remarks
+        if len(self.run_metrics["errors"]) > error_index:
+            new_errors = [er for er in self.run_metrics["errors"][error_index:]]
+            prompt_errors = [
+                str(er) for er in new_errors if isinstance(er, ParsingError) or isinstance(er, ValidationError)
+            ]
+            error_index = len(self.run_metrics["errors"])
+            self.last_error = "\n - ".join(prompt_errors)
+        self._debug(
+            f"Run Error #{n_run}/{self.max_retries}",
+            raised=str(e),
+            new_errors=self.last_error,
+            error_index=error_index,
+            run_metrics=self.run_metrics["errors"]
+        )
+        n_run += 1
+        return n_run, error_index

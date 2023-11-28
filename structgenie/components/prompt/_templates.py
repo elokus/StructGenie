@@ -14,7 +14,28 @@ CHAT_TEMPLATE = """<%system%>
 <%user%>
 {remarks}
 {input}
-</%user%>"""
+</%user%>
+"""
+
+CHAT_TEMPLATE_ON_ERROR = """<%system%>
+{instruction}
+{format_instructions}
+</%system%>
+<%examples%>
+{examples}
+</%examples%>
+<%user%>
+{remarks}
+{input}
+</%user%>
+<%last_output%>
+{last_output}
+</%last_output%>
+<%user_error%>
+Your response is not valid and caused the following error:
+{error}
+</%user_error%>
+"""
 
 DEFAULT_SCHEMA_TEMPLATE = """{instruction}
 {examples}
@@ -31,9 +52,13 @@ so that your response can be parsed with yaml.safe_load().
 Remember to set the value in quotes using the Double quotation marks 
 when values are multiline strings or contain ':'."""
 ERROR_TEMPLATE = """{remarks}
-The following error occurred during your last attempt:
+During last attempt, the following errors were encountered:
 {error}
+This error was due to your response:
+{last_output}
 Please fix the error and try again."""
+
+
 
 FIX_PARSING_ERROR_TEMPLATE = """The output from a previous generation task runs into a parsing error. The error is raised during parsing a string output with yaml.load() function.
 This is often caused by a non-ascii character in the output, wrong multiline string format or characters like ":" in the output string that interfere with the yaml format.

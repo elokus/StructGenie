@@ -9,6 +9,7 @@ import openai
 
 from structgenie.base import BaseGenerationDriver
 from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message
+from structgenie.utils.openai import _create_retry_decorator
 
 
 class OpenAIDriver(BaseGenerationDriver):
@@ -19,6 +20,7 @@ class OpenAIDriver(BaseGenerationDriver):
     prompt: str = None
     model_name: str = None
     llm_kwargs: dict = None
+    max_retries: int = 4
 
     @classmethod
     def prompt_mode(cls):
@@ -54,24 +56,37 @@ class OpenAIDriver(BaseGenerationDriver):
         system_message = split_prompt(prompt, "system")
         examples = split_prompt(prompt, "examples")
         user_message = split_prompt(prompt, "user")
+        last_output = split_prompt(prompt, "last_output")
+        user_error = split_prompt(prompt, "user_error")
 
         # create chat messages
         messages = [create_chat_message("system", system_message)]
         if examples:
             messages.extend(create_examples_messages(examples))
         messages.append(create_chat_message("user", user_message))
-
+        if last_output and user_error:
+            messages.append(create_chat_message("assistant", last_output))
+            messages.append(create_chat_message("user", user_error))
+            print("MESSAGES\n")
+            print(messages)
         return messages
 
     def completion(self, **kwargs):
         client = openai.OpenAI()
         messages = self.parse_prompt(**kwargs)
         exec_start = time.time()
-        response = client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            **self.llm_kwargs
-        )
+
+        retry_decorator = _create_retry_decorator(self)
+
+        @retry_decorator
+        def _completion():
+            return client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                **self.llm_kwargs
+            )
+
+        response = _completion()
 
         result = response.choices[0].message.content
         execution_metrics = {
@@ -86,15 +101,22 @@ class OpenAIDriver(BaseGenerationDriver):
         client = openai.AsyncOpenAI()
         messages = self.parse_prompt(**kwargs)
         exec_start = time.time()
-        response = await client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            **self.llm_kwargs
-        )
-        result = response["choices"][0]["message"]
+
+        retry_decorator = _create_retry_decorator(self)
+
+        @retry_decorator
+        async def _completion():
+            return await client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                **self.llm_kwargs
+            )
+
+        response = await _completion()
+        result = response.choices[0].message.content
         execution_metrics = {
             "execution_time": time.time() - exec_start,
-            "token_usage": response["usage"]["total_tokens"],
+            "token_usage": response.usage.total_tokens,
             "model_name": self.model_name,
             "model_config": self.llm_kwargs,
         }

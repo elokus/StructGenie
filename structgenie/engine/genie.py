@@ -20,6 +20,7 @@ class StructEngine(BaseEngine):
 
         Args:
             inputs (dict): The inputs for the chain.
+            raise_error (bool): If True, errors will be raised.
             **kwargs: Keyword arguments for the chain.
 
         Returns:
@@ -35,33 +36,17 @@ class StructEngine(BaseEngine):
             try:
                 output = self._run(inputs, error_msg=self.last_error, **kwargs)
                 if self.return_metrics:
+                    self.errors_to_string()
                     return output, self.run_metrics
                 return output
 
             except Exception as e:
-                if raise_error or self.raise_errors:
-                    raise e
-                e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
-                self._log_error(e)
-
-                # prepare error remarks
-                if len(self.run_metrics["errors"]) > error_index:
-                    new_errors = [er for er in self.run_metrics["errors"][error_index:]]
-                    prompt_errors = [
-                        str(er) for er in new_errors if isinstance(er, ParsingError) or isinstance(er, ValidationError)
-                    ]
-                    error_index = len(self.run_metrics["errors"])
-                    self.last_error = "\n - ".join(prompt_errors)
-
-                self._debug(
-                    f"Run Error #{n_run}/{self.max_retries}",
-                    raised=str(e),
-                )
-                n_run += 1
+                n_run, error_index = self._on_run_error(e, error_index, n_run, raise_error)
 
         e = MaxRetriesError(f"exceeded max retries: {self.max_retries}")
         self._log_error(e)
         raise e
+
 
     def _run(self, inputs: dict, error_msg: str, **kwargs):
         """Run the chain.
@@ -117,14 +102,12 @@ class StructEngine(BaseEngine):
         if error_msg is None:
             return self.prompt_builder.build(chat_mode=is_chat_mode, **kwargs)
 
-        error_remark = (
-            "---\n"
-            f"During last generation, errors were encountered for following output:\n{self.last_output}\n\n"
-            f"{error_msg}\n"
-            "---\n"
+        return self.prompt_builder.build(
+            error=error_msg,
+            chat_mode=is_chat_mode,
+            last_output=self.last_output,
+            **kwargs
         )
-
-        return self.prompt_builder.build(error=error_remark, chat_mode=is_chat_mode, **kwargs)
 
         # if isinstance(error, ParsingError):
         #     return self.prompt_builder.fix_parsing(error=str(error), **kwargs)
@@ -134,7 +117,7 @@ class StructEngine(BaseEngine):
         #
         # return self.prompt_builder.build(**kwargs)
 
-    def prep_executor(self, prompt: str, chat_prompt: dict = None, **kwargs) -> BaseGenerationDriver:
+    def prep_executor(self, prompt: str, **kwargs) -> BaseGenerationDriver:
         """Prepare the executor for the chain.
 
         Args:
@@ -212,6 +195,11 @@ class StructEngine(BaseEngine):
 
         validation_errors = self.validator.validate(output, inputs)
         if validation_errors:
+            errors = {f"Error_{i}": str(error) for i, error in enumerate(validation_errors)}
+            self._debug(
+                "Validation Error",
+                **errors,
+            )
             for error in validation_errors:
                 self._log_error(error)
             raise ValidationError("Validation failed with errors")
@@ -226,6 +214,9 @@ class StructEngine(BaseEngine):
     @property
     def execution_type(self):
         return "sync"
+
+    def errors_to_string(self):
+        self.run_metrics["errors"] = [str(e) for e in self.run_metrics["errors"]]
 
     # def _remove_cot(self, output: dict):
     #     cot = []
