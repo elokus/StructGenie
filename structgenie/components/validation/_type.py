@@ -30,7 +30,13 @@ def validate_type(key: str, value: str, val_config: dict) -> Union[str, None]:
     type_ = val_config.get(_key).get("type", None)
     if is_none(value):
         return None
-    if type_ and not isinstance(value, eval(instance_type(type_))):
-        return f"Wrong type for '{key}': '{value}'. Expected {type_}, got {type(value)}"
+    if type_ == "any":
+        return None
+    try:
+        if type_ and not isinstance(value, eval(instance_type(type_))):
+            return f"Wrong type for '{key}': '{value}'. Expected {type_}, got {type(value)}"
+    except:
+        print(f"Isinstance failed for '{key}': '{value}'.Type: {type_}")
+        raise ValueError(f"Wrong type for '{key}': '{value}'. on isinstance({instance_type(type_)})")
     return None
 

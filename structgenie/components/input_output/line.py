@@ -50,9 +50,6 @@ class IOLine(BaseIOLine):
             values["placeholder"] = [values["placeholder"]]
         if isinstance(values["placeholder"], list):
             values["placeholder"] = [remove_curly_brackets(v) for v in values["placeholder"]]
-        if values["type"] == "multiline":
-            values["multiline"] = True
-            values["type"] = "str"
         if values.get("enum"):
             values["options"] = values.pop("enum")
         if values.get("key").startswith("_") or values.get("type") in HIDDEN_TYPES:
