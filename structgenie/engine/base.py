@@ -15,10 +15,11 @@ from structgenie.components.input_output import (
     init_input_model
 )
 from structgenie.driver.openai import OpenAIDriver
-from structgenie.errors import EngineRunError, ParsingError, ValidationError
+from structgenie.errors import EngineRunError, ParsingError, ValidationError, is_output_error
 from structgenie.utils.templates import (
     extract_sections, load_default_template, load_system_config
 )
+from structgenie.utils.logging import console_logger as logger
 
 DEFAULT_RUN_METRICS = {
     "execution_time": 0,
@@ -57,6 +58,9 @@ class BaseEngine(BaseModel, ABC):
     debug: bool = False
     raise_errors: bool = False
     return_metrics: bool = True
+
+    # logging
+    verbose: int = 0
 
     # run states
     last_error: Union[str, None] = None
@@ -247,13 +251,27 @@ class BaseEngine(BaseModel, ABC):
         self.run_metrics["errors"].append(error)
 
     # TODO: Add debug logging to file
-    def _debug(self, step_context: str, **kwargs):
+
+    def _log_message(self, step_context: str, **kwargs):
         """Print debug information."""
         if self.debug:
-            print(f"=== {step_context} ===")
-            for key, value in kwargs.items():
-                key_ = key.replace("_", " ").capitalize()
-                print(f"{key_}: {value}")
+            self.verbose = 3
+
+        if self.verbose >= 3:
+            extra_var = "\n".join([f"{key}: {value}" for key, value in kwargs.items()])
+            logger.debug(step_context, extra_var=extra_var)
+
+        elif self.verbose >= 2:
+            logger.info(step_context)
+
+        elif self.verbose >= 1:
+            logger.warning(step_context)
+
+        # if self.debug:
+        #     print(f"=== {step_context} ===")
+        #     for key, value in kwargs.items():
+        #         key_ = key.replace("_", " ").capitalize()
+        #         print(f"{key_}: {value}")
 
     # === Execute Generation ===
 
@@ -282,8 +300,9 @@ class BaseEngine(BaseModel, ABC):
     # === Error Handling ===
 
     def _on_run_error(self, e, error_index, n_run, raise_error):
-        if raise_error or self.raise_errors:
+        if raise_error or self.raise_errors or not is_output_error(e):
             raise e
+
         e = EngineRunError(f"run_num: {n_run}/{self.max_retries} ", e)
         self._log_error(e)
         # prepare error remarks
@@ -294,7 +313,7 @@ class BaseEngine(BaseModel, ABC):
             ]
             error_index = len(self.run_metrics["errors"])
             self.last_error = "\n - ".join(prompt_errors)
-        self._debug(
+        self._log_message(
             f"Run Error #{n_run}/{self.max_retries}",
             raised=str(e),
             new_errors=self.last_error,
@@ -303,3 +322,5 @@ class BaseEngine(BaseModel, ABC):
         )
         n_run += 1
         return n_run, error_index
+
+

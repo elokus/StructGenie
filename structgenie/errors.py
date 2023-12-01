@@ -89,3 +89,8 @@ class MultilineParsingError(ParsingError):
 
 class YamlParsingError(ParsingError):
     pass
+
+
+def is_output_error(error: Exception):
+    """Check if output is an error."""
+    return isinstance(error, ParsingError) or isinstance(error, ValidationError)

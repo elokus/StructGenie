@@ -8,8 +8,9 @@ from typing import Any, Union, Tuple
 import openai
 
 from structgenie.base import BaseGenerationDriver
-from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message
+from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message, message_to_str
 from structgenie.utils.openai import _create_retry_decorator
+from structgenie.utils.logging import console_logger as logger
 
 
 class OpenAIDriver(BaseGenerationDriver):
@@ -21,6 +22,7 @@ class OpenAIDriver(BaseGenerationDriver):
     model_name: str = None
     llm_kwargs: dict = None
     max_retries: int = 4
+    verbose: int = 0
 
     @classmethod
     def prompt_mode(cls):
@@ -67,8 +69,11 @@ class OpenAIDriver(BaseGenerationDriver):
         if last_output and user_error:
             messages.append(create_chat_message("assistant", last_output))
             messages.append(create_chat_message("user", user_error))
-            print("MESSAGES\n")
-            print(messages)
+
+        if self.verbose >= 3:
+            msgs = "\n".join([message_to_str(m) for m in messages])
+            logger.debug(f"messages:\n{msgs}")
+
         return messages
 
     def completion(self, **kwargs):

@@ -57,7 +57,7 @@ class AsyncEngine(StructEngine):
         inputs = self.prep_inputs(inputs, **kwargs)
         prompt = self.prep_prompt(error_msg, **inputs)
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
-        self._debug(
+        self._log_message(
             "Prompt",
             formatted_prompt=prompt.format(**inputs_)
         )
@@ -68,7 +68,7 @@ class AsyncEngine(StructEngine):
         self._log_metrics(run_metrics)
 
         self.last_output = text
-        self._debug(
+        self._log_message(
             "Execution",
             generation_output=text,
             run_metrics=run_metrics

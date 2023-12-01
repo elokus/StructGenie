@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from structgenie.utils.logging import console_logger as logger
 from importlib.metadata import version
 from typing import Callable, Any, Type, List
 
@@ -10,7 +11,6 @@ from tenacity import before_sleep_log, RetryCallState, retry_if_exception_type, 
 
 from structgenie.base import BaseGenerationDriver
 
-logger = logging.getLogger(__name__)
 
 def is_openai_v1() -> bool:
     _version = parse(version("openai"))

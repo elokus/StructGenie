@@ -2,6 +2,7 @@ from structgenie.base import BaseGenerationDriver
 from structgenie.components.output_parser.output_parser import OutputParser
 from structgenie.engine.base import BaseEngine
 from structgenie.errors import ParsingError, ValidationError, EngineRunError, MaxRetriesError
+from structgenie.utils.logging import error_logger
 from structgenie.utils.parsing import (
     dump_to_yaml_string,
     format_inputs,
@@ -41,12 +42,12 @@ class StructEngine(BaseEngine):
                 return output
 
             except Exception as e:
+                error_logger.exception("Error in run")
                 n_run, error_index = self._on_run_error(e, error_index, n_run, raise_error)
 
         e = MaxRetriesError(f"exceeded max retries: {self.max_retries}")
         self._log_error(e)
         raise e
-
 
     def _run(self, inputs: dict, error_msg: str, **kwargs):
         """Run the chain.
@@ -64,7 +65,8 @@ class StructEngine(BaseEngine):
         inputs = self.prep_inputs(inputs, **kwargs)
         prompt = self.prep_prompt(error_msg, **inputs)
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
-        self._debug(
+
+        self._log_message(
             "Prompt",
             formatted_prompt=prompt.format(**inputs_)
         )
@@ -75,7 +77,7 @@ class StructEngine(BaseEngine):
         self._log_metrics(run_metrics)
 
         self.last_output = text
-        self._debug(
+        self._log_message(
             "Execution",
             generation_output=text,
             run_metrics=run_metrics
@@ -137,13 +139,13 @@ class StructEngine(BaseEngine):
 
     def format_inputs(self, prompt: str, inputs: dict, **kwargs) -> dict:
         """Analyzes input variables in prompt and prepares inputs for executor."""
-        self._debug("Format Inputs (Pre)", prompt=prompt, inputs=inputs, keyargs=kwargs)
+        self._log_message("Format Inputs (Pre)", prompt=prompt, inputs=inputs, keyargs=kwargs)
 
         prompt, placeholder_map = prepare_inputs_placeholders(prompt, inputs, **kwargs)
         input_dict = format_inputs(placeholder_map)
 
         if self.debug:
-            self._debug(
+            self._log_message(
                 "Format Inputs",
                 placeholder_map=placeholder_map,
                 formatted_inputs=input_dict,
@@ -166,7 +168,7 @@ class StructEngine(BaseEngine):
         )
         output, run_metrics, error_log = output_parser.parse(text, inputs)
 
-        self._debug(
+        self._log_message(
             "Output Parsing",
             parsed_output=output,
             error_log=error_log,
@@ -178,6 +180,7 @@ class StructEngine(BaseEngine):
         if error_log:
             for error in error_log:
                 self._log_error(error)
+            raise ParsingError("Parsing failed with errors")
         return output
 
     # === output validation ===
@@ -196,7 +199,7 @@ class StructEngine(BaseEngine):
         validation_errors = self.validator.validate(output, inputs)
         if validation_errors:
             errors = {f"Error_{i}": str(error) for i, error in enumerate(validation_errors)}
-            self._debug(
+            self._log_message(
                 "Validation Error",
                 **errors,
             )

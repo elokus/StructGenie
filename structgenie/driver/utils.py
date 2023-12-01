@@ -33,6 +33,11 @@ def create_chat_message(role: str, content: str, name: str = None) -> dict:
         return {"role": role, "name": name, "content": content}
     return {"role": role, "content": content}
 
+def message_to_str(message: dict) -> str:
+    msg_str = f"Role: {message['role']}"
+    msg_str += f" | Name: {message['name']}\n" if message.get("name") else "\n"
+    msg_str += f"Content: {message['content']}"
+    return msg_str
 
 def create_chat_message_with_image(
         role: str,
