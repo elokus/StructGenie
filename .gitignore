@@ -6,3 +6,4 @@
 /.idea
 /_notebooks
 pytest.ini
+**/errors.log
