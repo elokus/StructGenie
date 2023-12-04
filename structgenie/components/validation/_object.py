@@ -23,6 +23,11 @@ def validate_keys(d: dict, val_config: dict) -> Union[str, None]:
             missing_keys.remove(key)
     if missing_keys:
         return f"Keys {missing_keys} not in output"
+
+    unexpected_keys = [key for key in d.keys() if key not in val_config]
+    if unexpected_keys:
+        return f"Unexpected keys {unexpected_keys} in output"
+
     return None
 
 
