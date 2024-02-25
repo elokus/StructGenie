@@ -1,5 +1,4 @@
 /.env
-/pyproject.toml
 /.pypirc
 /dist
 /structgenie.egg-info
