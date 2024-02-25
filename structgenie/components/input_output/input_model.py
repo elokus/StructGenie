@@ -1,6 +1,6 @@
 from typing import Type
 
-from pydantic import BaseModel, Field
+from structgenie.pydantic_v1 import BaseModel, Field
 
 from structgenie.base import BaseExample
 from structgenie.components.input_output._example_parser import type_schema_from_examples

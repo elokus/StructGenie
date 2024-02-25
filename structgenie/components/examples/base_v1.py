@@ -1,22 +1,11 @@
-from typing import Annotated
+from structgenie.pydantic_v1 import validator
 
 from structgenie.base import BaseExample
 from structgenie.utils.parsing import dump_to_yaml_string, parse_yaml_string, get_type_dict_from_object
 
 
-def _parse_yaml(v):
-    if isinstance(v, str):
-        return parse_yaml_string(v)
-    if not isinstance(v, dict):
-        try:
-            return v.dict()
-        except AttributeError:
-            pass
-    return v
 
-
-
-class Example(BaseExample):
+class Example_v1(BaseExample):
     input: dict
     output: dict
     _template: str = "{input}---\n{output}"

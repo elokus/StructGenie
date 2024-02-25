@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from pydantic import validator, root_validator
+from structgenie.pydantic_v1 import validator, root_validator
 
 from structgenie.base import BaseIOLine
 from structgenie.utils.parsing import parse_type_from_string

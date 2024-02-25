@@ -2,7 +2,7 @@ import uuid
 from abc import abstractmethod, ABC
 from typing import Union, Type, Tuple, Optional
 
-from pydantic import BaseModel, Field
+from structgenie.pydantic_v1 import BaseModel, Field
 
 from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver, BaseIOModel, BaseExampleSelector
 from structgenie.components.examples import ExampleSelector

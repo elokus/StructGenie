@@ -6,7 +6,7 @@ YAML format was chosen because it is easy to read and write for humans and machi
 from abc import ABC, abstractmethod
 from typing import Union, Any, Optional, Tuple
 
-from pydantic import BaseModel
+from structgenie.pydantic_v1 import BaseModel
 
 from structgenie.utils.helper import count_tokens
 

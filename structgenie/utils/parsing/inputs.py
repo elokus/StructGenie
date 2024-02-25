@@ -1,7 +1,7 @@
 import re
 from typing import Union
 
-from pydantic import BaseModel
+from structgenie.pydantic_v1 import BaseModel
 
 from structgenie.utils.parsing.placeholder import has_placeholder
 from structgenie.utils.parsing.string import dump_to_yaml_string

@@ -1,6 +1,6 @@
 import dotenv
 import pytest
-from pydantic import BaseModel
+from structgenie.pydantic_v1 import BaseModel
 
 from structgenie.components.input_output import OutputModel
 from structgenie.components.output_parser.fixing import fix_split_output

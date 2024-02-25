@@ -1,6 +1,6 @@
 from typing import Type
 
-from pydantic import BaseModel
+from structgenie.pydantic_v1 import BaseModel
 
 from structgenie.components.input_output.line import IOLine
 from structgenie.utils.parsing import parse_type_from_string
