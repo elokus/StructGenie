@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "structgenie"
-version = "0.1.19"
+version = "0.1.20"
 description = "LLM Generation Framework for structured outputs with type validation"
 license = "MIT"
 authors = ["elokow <lukas.kowejsza@gmail.com>"]
@@ -15,11 +15,11 @@ uuid = "^1.30"
 colorama = "0.4.6"
 tiktoken = ">=0.3.0,<1.0"
 openai = ">=1.2.0"
-jupyter = "^1.0.0"
-python-dotenv ="1.0.0"
+jupyter = ">=1.0.0"
+python-dotenv =">=1.0.0"
 pyyaml = ">=5.3,<10.0"
-pytest = "^7.4.3"
-tenacity = "8.2.3"
+pytest = ">=7.4.3"
+tenacity = ">=8.2.3"
 
 
 [tools.poetry.group.dev.dependencies]
