@@ -51,6 +51,7 @@ class IOLine(BaseIOLine):
         if isinstance(values["placeholder"], list):
             values["placeholder"] = [remove_curly_brackets(v) for v in values["placeholder"]]
         if values.get("enum"):
+            print(values["enum"])
             values["options"] = values.pop("enum")
         if values.get("key").startswith("_") or values.get("type") in HIDDEN_TYPES:
             values["hidden"] = True

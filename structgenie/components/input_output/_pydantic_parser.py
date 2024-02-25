@@ -119,7 +119,7 @@ def concat_type(value: dict, prefix_type: str):
     if prefix_type is not None:
         if not value.get("type") and "enum" in value:
             value["type"] = str(type(value["enum"][0]).__name__)
-            if None in value["enum"]:
+            if None in value["enum"] or "None" in value["enum"]:
                 value["type"] = f"Union[{value['type']}, None]"
         return f"{prefix_type}[{parse_type_from_string(value['type'])}]"
     return value.get("type")
