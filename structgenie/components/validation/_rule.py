@@ -87,10 +87,16 @@ def one_of(output: str, possible_values: list[str]):
 
 # TODO: add optional flag
 def one_or_more(output: Union[str, list], possible_values: list[str]):
-    if isinstance(output, str):
-        output = parse_list(output)
+
     if is_none(output) and (None in possible_values or "None" in possible_values):
         return None
+
+    if isinstance(output, str):
+        output = parse_list(output)
+
+    if is_none(output):
+        output = [None]
+
         # if None in possible_values:
         #     return None
         #return f"Output '{output}' is not one of the possible values: {possible_values}"
