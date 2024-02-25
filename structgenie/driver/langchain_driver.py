@@ -10,8 +10,23 @@ from structgenie.base import BaseGenerationDriver
 
 
 def load_langchain_llm(model_name: str, **kwargs):
-    from langchain.chat_models import ChatOpenAI
-    return ChatOpenAI(model_name=model_name, **kwargs)
+
+    # find out version of langchain package
+    from langchain import __version__ as langchain_version
+
+    if langchain_version >= "0.1.7":
+        # check if langchain_openai is installed
+        try:
+            from langchain_openai import ChatOpenAI
+        except ImportError:
+            raise ImportError("To use the LangchainDriver, you need to install the langchain_openai package.")
+
+        return ChatOpenAI(model_name=model_name, **kwargs)
+
+    else:
+        from langchain.chat_models import ChatOpenAI
+
+        return ChatOpenAI(model_name=model_name, **kwargs)
 
 
 class LangchainDriver(BaseGenerationDriver):

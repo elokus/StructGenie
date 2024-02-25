@@ -26,6 +26,8 @@ def validate_keys(d: dict, val_config: dict) -> Union[str, None]:
 
     unexpected_keys = [key for key in d.keys() if key not in val_config]
     if unexpected_keys:
+        if any([key.startswith("$") for key in val_config.keys()]):
+            return None
         return f"Unexpected keys {unexpected_keys} in output"
 
     return None

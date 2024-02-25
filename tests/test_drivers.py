@@ -1,6 +1,6 @@
 import pytest
 
-from structgenie.driver.openai import OpenAIDriver
+from structgenie.driver.openai_driver import OpenAIDriver
 from structgenie.driver.openai_vision import OpenAIDriverVision
 from structgenie.utils.helper import build_prompt_from_template
 from structgenie.utils.parsing import dump_to_yaml_string

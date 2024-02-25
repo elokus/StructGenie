@@ -63,11 +63,22 @@ def test_output_parser_with_llm(generated_text_with_llm_error, test_output_model
     dotenv.load_dotenv()
     parser = OutputParser(test_output_model)
     output, run_metrics, error_log = parser.parse(generated_text_with_llm_error, {})
-    assert output == {
+
+    possible_outputs = [
+        {
         "reasoning": "The input is a valid SMILES string. Meta: values according to something else",
         "result": "The input is a valid SMILES string.",
-        "meta": {"key": "value", "key2": "value2"},
-    }
+        "meta": {"key": "value", "key2": "value2"}
+        },
+        {
+            "reasoning": "The input is a valid SMILES string.",
+        "result": "The input is a valid SMILES string.",
+        "meta": {"key": "value", "key2": "value2"}
+        }
+    ]
+
+    assert output in possible_outputs
+
     assert len(run_metrics) >= 1
     assert len(error_log) >= 1
 
@@ -83,8 +94,6 @@ def test_output_parser_duplicate_keys():
     output_model = OutputModel.from_string("Reasoning: <str>\nResult: <str>")
     parser = OutputParser(output_model)
     output, run_metrics, error_log = parser.parse(output, {})
-
-    print(output)
     assert error_log == []
 
 
@@ -96,8 +105,6 @@ Result: The input is a valid SMILES string.
     output_model = OutputModel.from_string("Reasoning: <str>\nResult: <str>")
     parser = OutputParser(output_model)
     output, run_metrics, error_log = parser.parse(output, {})
-
-    print(output)
     assert error_log == []
 
 

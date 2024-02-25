@@ -78,6 +78,8 @@ def parse_list(value: Union[str, list]) -> list:
 
 
 def one_of(output: str, possible_values: list[str]):
+    if is_none(output) and (None in possible_values or "None" in possible_values):
+        return None
     if output not in possible_values:
         return f"Output '{output}' is not one of the possible values: {possible_values}"
     return None
@@ -87,7 +89,7 @@ def one_of(output: str, possible_values: list[str]):
 def one_or_more(output: Union[str, list], possible_values: list[str]):
     if isinstance(output, str):
         output = parse_list(output)
-    if not output:
+    if is_none(output) and (None in possible_values or "None" in possible_values):
         return None
         # if None in possible_values:
         #     return None

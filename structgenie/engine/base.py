@@ -1,10 +1,10 @@
 import uuid
 from abc import abstractmethod, ABC
-from typing import Union, Type, Tuple
+from typing import Union, Type, Tuple, Optional
 
 from pydantic import BaseModel, Field
 
-from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver, BaseIOModel
+from structgenie.base import BasePromptBuilder, BaseValidator, BaseGenerationDriver, BaseIOModel, BaseExampleSelector
 from structgenie.components.examples import ExampleSelector
 from structgenie.components.input_output import (
     OutputModel,
@@ -14,7 +14,7 @@ from structgenie.components.input_output import (
     load_input_model,
     init_input_model
 )
-from structgenie.driver.openai import OpenAIDriver
+from structgenie.driver.openai_driver import OpenAIDriver
 from structgenie.errors import EngineRunError, ParsingError, ValidationError, is_output_error
 from structgenie.utils.templates import (
     extract_sections, load_default_template, load_system_config
@@ -53,7 +53,7 @@ class BaseEngine(BaseModel, ABC):
     input_schema: str = None
     input_model: BaseIOModel = None
     output_model: BaseIOModel = None
-    examples: ExampleSelector = None
+    examples: Optional[BaseExampleSelector] = None
     instruction: str = None
     debug: bool = False
     raise_errors: bool = False
@@ -75,7 +75,7 @@ class BaseEngine(BaseModel, ABC):
 
     # === Setters ===
 
-    def set_example_selector(self, examples: ExampleSelector):
+    def set_example_selector(self, examples: BaseExampleSelector):
         self.prompt_builder.examples = examples
         self.examples = examples
 
@@ -259,7 +259,8 @@ class BaseEngine(BaseModel, ABC):
 
         if self.verbose >= 3:
             extra_var = "\n".join([f"{key}: {value}" for key, value in kwargs.items()])
-            logger.debug(step_context, extra_var=extra_var)
+            step_context = f"{step_context}\n{extra_var}"
+            logger.debug(step_context)
 
         elif self.verbose >= 2:
             logger.info(step_context)

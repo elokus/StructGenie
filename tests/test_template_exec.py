@@ -1,6 +1,6 @@
 import pytest
 
-from structgenie.driver.openai import OpenAIDriver
+from structgenie.driver.openai_driver import OpenAIDriver
 from structgenie.engine import StructEngine
 
 

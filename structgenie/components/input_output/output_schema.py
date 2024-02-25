@@ -85,6 +85,9 @@ def _replace_dict_from_inputs(inputs: dict, replace_dict: dict = None) -> dict:
 def _output_item_value(attr: BaseIOLine, replace_dict: dict = None) -> str:
     string = f"<{attr.type}"
     if attr.options:
+        if None in attr.options:
+            attr.options.remove(None)
+            attr.options.append("None")
         string += f", options=[{', '.join(attr.options)}]"
         if attr.multiple_select:
             string += ", multiple_select=True"

@@ -81,6 +81,8 @@ def test_validator_nested(output_model_nested):
         "son": {"name": "Jack", "role": "son", "age": 18}
     }}
     validator = Validator.from_output_model(output_model_nested)
+    print(validator.validation_config)
+
     errors = validator.validate(output, {})
     assert not errors
 
