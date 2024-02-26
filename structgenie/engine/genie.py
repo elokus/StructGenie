@@ -159,7 +159,10 @@ class StructEngine(BaseEngine):
     # === output parsing ===
 
     def parse_output(self, text: str, inputs: dict):
-        """Parse the output of the chain."""
+        """Parse the output of the chain.
+
+        Returns a dictionary of the parsed output.
+        """
         output_parser = OutputParser(
             self.output_model,  # type: ignore
             fix_by_llm=self.fix_parsing_by_llm,

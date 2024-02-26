@@ -1,7 +1,7 @@
 from typing import Union
 
 from structgenie.base import BaseEngine
-from structgenie.engine.single import StructGenie
+from structgenie.engine.genie import StructGenie
 
 TEMPLATE_SEPERATOR = "%%%"
 

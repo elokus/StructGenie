@@ -33,6 +33,22 @@ def validate_keys(d: dict, val_config: dict) -> Union[str, None]:
     return None
 
 
+def validate_missing_keys(d: dict, val_config: dict) -> list:
+    missing_keys = [key for key in required_keys(val_config) if key not in d]
+    for key in missing_keys:
+        if key in val_config and val_config[key].get("default", None):
+            missing_keys.remove(key)
+    return missing_keys
+
+
+def validate_unexpected_keys(d: dict, val_config: dict) -> list:
+    unexpected_keys = [key for key in d.keys() if key not in val_config]
+    if unexpected_keys:
+        if any([key.startswith("$") for key in val_config.keys()]):
+            return []
+    return unexpected_keys
+
+
 def nested_key_validation(key: str, value: any, output_model: BaseIOModel = None, inputs: dict = None):
     errors = []
 

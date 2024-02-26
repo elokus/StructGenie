@@ -51,6 +51,22 @@ Do not include any other information or explanation to your response,
 so that your response can be parsed with yaml.safe_load().
 Remember to set the value in quotes using the Double quotation marks 
 when values are multiline strings or contain ':'."""
+FORMAT_INSTRUCTIONS_TEMPLATE_CONDITIONAL = """Condition: {condition}
+If the condition is True, please return a response in yaml format using the following schema:
+Please return a response in yaml format using the following schema:
+```yaml
+{response_schema}
+```
+Else, please return a response in yaml format using the following schema:
+```yaml
+{response_schema_else}
+```
+
+Do not include any other information or explanation to your response, 
+so that your response can be parsed with yaml.safe_load().
+Remember to set the value in quotes using the Double quotation marks 
+when values are multiline strings or contain ':'."""
+
 ERROR_TEMPLATE = """{remarks}
 During last attempt, the following errors were encountered:
 {error}
