@@ -23,6 +23,8 @@ def parse_type_from_string(type_: str) -> str:
         type_ = type_.replace("Dict", "dict")
     if "Any" in type_:
         type_ = type_.replace("Any", "any")
+    if "number" in type_:
+        type_ = type_.replace("number", "float")
 
     if type_ in TYPE_DICT:
         return TYPE_DICT[type_]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "structgenie"
-version = "0.1.20"
+version = "0.1.23"
 description = "LLM Generation Framework for structured outputs with type validation"
 license = "MIT"
 authors = ["elokow <lukas.kowejsza@gmail.com>"]

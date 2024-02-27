@@ -88,7 +88,11 @@ def _output_item_value(attr: BaseIOLine, replace_dict: dict = None) -> str:
         if None in attr.options:
             attr.options.remove(None)
             attr.options.append("None")
-        string += f", options=[{', '.join(attr.options)}]"
+        if attr.type == "str":
+            options = [f"'{x.strip()}'" for x in attr.options]
+        else:
+            options = attr.options
+        string += f", options=[{', '.join(options)}]"
         if attr.multiple_select:
             string += ", multiple_select=True"
 
