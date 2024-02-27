@@ -84,47 +84,6 @@ class ConditionalEngine(StructEngine):
             **kwargs
         )
 
-    def _run(self, inputs: dict, error_msg: str, **kwargs):
-        """Run the chain.
-
-        Args:
-            inputs (dict): The inputs for the chain.
-            error_msg (Exception): The error of the previous run.
-            **kwargs: Keyword arguments for the chain.
-
-        Returns:
-            Any: The output of the chain.
-        """
-
-        # prepare
-        inputs = self.prep_inputs(inputs, **kwargs)
-        prompt = self.prep_prompt(error_msg, **inputs)
-        inputs_ = self.format_inputs(prompt, inputs, **kwargs)
-
-        self._log_message(
-            "Prompt",
-            formatted_prompt=prompt.format(**inputs_)
-        )
-
-        # generate
-        executor = self.prep_executor(prompt, **kwargs)
-        text, run_metrics = self._call_executor(executor, inputs_)
-        self._log_metrics(run_metrics)
-
-        self.last_output = text
-        self._log_message(
-            "Execution",
-            generation_output=text,
-            run_metrics=run_metrics
-        )
-        # parse
-        output = self.parse_output(text, inputs)
-
-        # validate
-        self.validate_output(output, inputs)
-
-        return output
-
     def check_condition(self, inputs: dict, output: dict) -> bool:
         """Check the condition.
 

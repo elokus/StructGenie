@@ -1,6 +1,6 @@
 import pytest
 
-from structgenie.experimental.conditional import ConditionalEngine
+from structgenie.engine.conditional import ConditionalEngine
 from structgenie.pydantic_v1 import BaseModel
 from structgenie.components.input_output import OutputModel, InputModel
 
