@@ -1,7 +1,9 @@
 import pytest
+from mistralai.models.chat_completion import ChatCompletionResponseChoice
 
 from structgenie.driver.openai_driver import OpenAIDriver
 from structgenie.driver.openai_vision import OpenAIDriverVision
+from structgenie.driver.mistral_driver import MistralDriver
 from structgenie.utils.helper import build_prompt_from_template
 from structgenie.utils.parsing import dump_to_yaml_string
 
@@ -44,7 +46,29 @@ def test_for_loop_driver_metrics(family_loop_template, family_input):
     prompt = prompt.replace("{family_roles}", str(family_input["family_roles"]))
     inputs = {"input": dump_to_yaml_string({"family_members": family_input})}
 
+    driver = MistralDriver.load_driver(prompt)
+    output, metrics = driver.predict_and_measure(**inputs)
+    print(metrics)
+    assert isinstance(output, str)
+    assert isinstance(metrics, dict)
+
+
+def test_for_loop_driver_predict_mistral(family_loop_template, family_input):
+    prompt = build_prompt_from_template(family_loop_template, chat_mode=True)
+    prompt = prompt.replace("{family_roles}", str(family_input["family_roles"]))
+    inputs = {"input": dump_to_yaml_string({"family_members": family_input})}
+
     driver = OpenAIDriver.load_driver(prompt)
+    output = driver.predict(**inputs)
+    assert isinstance(output, str)
+
+
+def test_for_loop_driver_metrics_mistral(family_loop_template, family_input):
+    prompt = build_prompt_from_template(family_loop_template, chat_mode=True)
+    prompt = prompt.replace("{family_roles}", str(family_input["family_roles"]))
+    inputs = {"input": dump_to_yaml_string({"family_members": family_input})}
+
+    driver = MistralDriver.load_driver(prompt)
     output, metrics = driver.predict_and_measure(**inputs)
     print(metrics)
     assert isinstance(output, str)
