@@ -7,13 +7,13 @@ from typing import Any, Union, Tuple
 
 import openai
 
-from structgenie.base import BaseGenerationDriver
+from structgenie.driver.chat_driver import ChatDriver
 from structgenie.driver.utils import split_prompt, create_examples_messages, create_chat_message, message_to_str
-from structgenie.utils.openai import _create_retry_decorator
+from structgenie.utils.openai import create_retry_decorator
 from structgenie.utils.logging import console_logger as logger
 
 
-class OpenAIDriver(BaseGenerationDriver):
+class OpenAIDriver(ChatDriver):
     """OpenAI Chat Driver
 
     Utilizes the OpenAI Chat API with structgenie prompt schema.
@@ -39,6 +39,8 @@ class OpenAIDriver(BaseGenerationDriver):
 
         Args:
             prompt (Union[str, Any]): The prompt.
+            model_name (str, optional): The model name. Defaults to "gpt-3.5-turbo".
+            llm_kwargs (dict, optional): The model config. Defaults to None.
 
         Returns:
             OpenAIDriver: The driver.
@@ -50,38 +52,12 @@ class OpenAIDriver(BaseGenerationDriver):
         cls_.llm_kwargs = llm_kwargs or {}
         return cls_
 
-    def parse_prompt(self, **kwargs) -> list[dict]:
-        # add inputs to prompt
-        prompt = self.prompt.format(**kwargs)
-
-        # split prompt into sections
-        system_message = split_prompt(prompt, "system")
-        examples = split_prompt(prompt, "examples")
-        user_message = split_prompt(prompt, "user")
-        last_output = split_prompt(prompt, "last_output")
-        user_error = split_prompt(prompt, "user_error")
-
-        # create chat messages
-        messages = [create_chat_message("system", system_message)]
-        if examples:
-            messages.extend(create_examples_messages(examples))
-        messages.append(create_chat_message("user", user_message))
-        if last_output and user_error:
-            messages.append(create_chat_message("assistant", last_output))
-            messages.append(create_chat_message("user", user_error))
-
-        if self.verbose >= 3:
-            msgs = "\n".join([message_to_str(m) for m in messages])
-            logger.debug(f"messages:\n{msgs}")
-
-        return messages
-
-    def completion(self, **kwargs):
+    def completion(self, memory: list[dict] = None, **kwargs):
         client = openai.OpenAI()
-        messages = self.parse_prompt(**kwargs)
+        messages = self.parse_prompt(memory=memory, **kwargs)
         exec_start = time.time()
 
-        retry_decorator = _create_retry_decorator(self)
+        retry_decorator = create_retry_decorator(self)
 
         @retry_decorator
         def _completion():
@@ -102,12 +78,12 @@ class OpenAIDriver(BaseGenerationDriver):
         }
         return result, execution_metrics
 
-    async def async_completion(self, **kwargs):
+    async def async_completion(self, memory: list[dict] = None, **kwargs):
         client = openai.AsyncOpenAI()
-        messages = self.parse_prompt(**kwargs)
+        messages = self.parse_prompt(memory=memory, **kwargs)
         exec_start = time.time()
 
-        retry_decorator = _create_retry_decorator(self)
+        retry_decorator = create_retry_decorator(self)
 
         @retry_decorator
         async def _completion():
@@ -126,54 +102,6 @@ class OpenAIDriver(BaseGenerationDriver):
             "model_config": self.llm_kwargs,
         }
         return result, execution_metrics
-
-    def predict(self, **kwargs) -> str:
-        """Generate the text.
-
-        Args:
-            **kwargs: Keyword arguments for the prompt to pass into placeholder.
-
-        Returns:
-            str: The generated text.
-        """
-        text, _ = self.completion(**kwargs)
-        return text
-
-    def predict_and_measure(self, **kwargs) -> Tuple[str, dict]:
-        """Generate the text and measure the performance.
-
-        Args:
-            **kwargs: Keyword arguments for the prompt to pass into placeholder.
-
-        Returns:
-            Tuple[str, dict]: The generated text and the performance metrics.
-        """
-        text, metrics = self.completion(**kwargs)
-        return text, metrics
-
-    async def predict_async(self, **kwargs) -> str:
-        """Generate the text.
-
-        Args:
-            **kwargs: Keyword arguments for the prompt to pass into placeholder.
-
-        Returns:
-            str: The generated text.
-        """
-        text, _ = await self.async_completion(**kwargs)
-        return text
-
-    async def predict_and_measure_async(self, **kwargs) -> Tuple[str, dict]:
-        """Generate the text and measure the performance.
-
-        Args:
-            **kwargs: Keyword arguments for the prompt to pass into placeholder.
-
-        Returns:
-            Tuple[str, dict]: The generated text and the performance metrics.
-        """
-        text, metrics = await self.async_completion(**kwargs)
-        return text, metrics
 
 
 if __name__ == "__main__":

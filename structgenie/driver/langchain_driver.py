@@ -1,9 +1,10 @@
 import time
 from typing import Union, Tuple, Type
 
-from langchain import LLMChain, PromptTemplate
-from langchain.callbacks import get_openai_callback
-from langchain.chat_models import ChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from langchain_community.callbacks import get_openai_callback
+from langchain_community.chat_models import ChatOpenAI
 from langchain.llms import BaseLLM
 
 from structgenie.base import BaseGenerationDriver

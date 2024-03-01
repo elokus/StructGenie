@@ -17,7 +17,7 @@ def is_openai_v1() -> bool:
     return _version.major >= 1
 
 
-def _create_retry_decorator(
+def create_retry_decorator(
     driver: BaseGenerationDriver,
 ) -> Callable[[Any], Any]:
     import openai

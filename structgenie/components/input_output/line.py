@@ -39,6 +39,7 @@ class IOLine(BaseIOLine):
     multiline: bool = False
     custom_value_template: Optional[str] = None
     hidden: bool = False
+    description: Optional[str] = None
 
     # === validators ===
 
@@ -123,10 +124,11 @@ class IOLine(BaseIOLine):
             d["prompt_key"] = self.prompt_key
         if not d.get("options"):
             d.pop("multiple_select", None)
+
         return d
 
     def _kwargs_to_string(self):
-        kwargs = [f"{k}={v}" for k, v in self._kwargs_dict(["type", "key", "prompt_key", "placeholder"]).items()]
+        kwargs = [f"{k}={v}" for k, v in self._kwargs_dict(["type", "key", "prompt_key", "placeholder", "hidden", "multiline"]).items()]
         if kwargs:
             return f", {', '.join(kwargs)}"
         return ""
