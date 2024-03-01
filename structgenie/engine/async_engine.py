@@ -25,6 +25,8 @@ class AsyncEngine(StructEngine):
         self.last_error = None
         error_index = 0
 
+        self.memory = kwargs.get("memory", [])
+
         n_run = 0
         while n_run <= self.max_retries:
             try:
