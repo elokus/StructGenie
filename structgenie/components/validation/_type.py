@@ -65,9 +65,27 @@ def validate_type(key: str, value: str, val_config: dict) -> Union[str, None]:
         if type_ and not isinstance(value, eval(instance_type(type_))):
             return f"Wrong type for '{key}': '{value}'. Expected {type_}, got {type(value)}"
     except:
+        if instance_type(type_) == "datetime.datetime":
+            return verify_date(key, value)
         print(f"Isinstance failed for '{key}': '{value}'.Type: {type_}")
         raise ValueError(f"Wrong type for '{key}': '{value}'. on isinstance({instance_type(type_)})")
     return None
+
+
+def verify_date(key, value):
+    from datetime import datetime
+
+    if isinstance(value, datetime):
+        return None
+
+    for format in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d"]:
+        try:
+            date = datetime.strptime(value, format)
+            return None
+        except:
+            pass
+
+    return f"Wrong date format for '{key}': '{value}'. Expected %Y-%m-%d, got {value}"
 
 
 
@@ -87,3 +105,9 @@ if __name__ == "__main__":
     for str_type in str_types:
 
         print(instance_type(str_type)) # list[Union[str, None]]
+
+
+    dates = ['2022-10-12', '2022-10-12 12:00:00', '2022-10-12 12:00:00.000000']
+
+    for date in dates:
+        print(verify_date("date", date))

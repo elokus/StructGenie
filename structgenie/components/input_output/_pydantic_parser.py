@@ -105,6 +105,8 @@ def get_iterator(value: dict):
 
 def parse_line(key: str, value: dict, prefix_type: str = None):
     attributes = value.copy()
+    if attributes.get("format") == "date-time":
+        attributes["type"] = "datetime.datetime"
     if prefix_type is not None:
         attributes["type"] = concat_type(value, prefix_type)
 
@@ -121,6 +123,8 @@ def concat_type(value: dict, prefix_type: str):
             value["type"] = str(type(value["enum"][0]).__name__)
             if None in value["enum"] or "None" in value["enum"]:
                 value["type"] = f"Union[{value['type']}, None]"
+        print(value)
+        print(prefix_type)
         return f"{prefix_type}[{parse_type_from_string(value['type'])}]"
     return value.get("type")
 
@@ -133,7 +137,7 @@ def nested_key(value: dict):
 
 
 def is_nested(value: dict):
-    return nested_key(value) is not None
+    return nested_key(value) is not None and value[nested_key(value)]
 
 
 def pass_props_to_child(parent_props: dict, child_props: dict):
