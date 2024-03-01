@@ -189,7 +189,7 @@ class BaseGenerationDriver(ABC):
         return "completion"
 
     @abstractmethod
-    def predict(self, **kwargs) -> str:
+    def predict(self, memory: list[dict] = None, **kwargs) -> str:
         """Generate the text.
 
         Returns:
@@ -198,7 +198,7 @@ class BaseGenerationDriver(ABC):
         pass
 
     @abstractmethod
-    def predict_and_measure(self, **kwargs) -> Tuple[str, dict]:
+    def predict_and_measure(self, memory: list[dict] = None, **kwargs) -> Tuple[str, dict]:
         """Generate the text and measure the performance.
 
         Returns:
@@ -207,12 +207,12 @@ class BaseGenerationDriver(ABC):
         pass
 
     @abstractmethod
-    async def predict_async(self, **kwargs) -> str:
+    async def predict_async(self, memory: list[dict] = None, **kwargs) -> str:
         """Generate the text. (async)"""
         pass
 
     @abstractmethod
-    async def predict_and_measure_async(self, **kwargs) -> Tuple[str, dict]:
+    async def predict_and_measure_async(self, memory: list[dict] = None, **kwargs) -> Tuple[str, dict]:
         """Generate the text and measure the performance.
 
         Returns:

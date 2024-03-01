@@ -99,10 +99,10 @@ class AsyncEngineConditional(ConditionalEngine):
             dict|None: run_metric if return_metrics is True
         """
         if self.return_metrics:
-            result, run_metrics = await executor.predict_and_measure_async(**inputs)
+            result, run_metrics = await executor.predict_and_measure_async(memory=self.memory, **inputs)
             self._log_metrics(run_metrics)
         else:
-            result = await executor.predict_async(**inputs)
+            result = await executor.predict_async(memory=self.memory, **inputs)
             run_metrics = None
 
         return result, run_metrics

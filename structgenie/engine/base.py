@@ -66,6 +66,7 @@ class BaseEngine(BaseModel, ABC):
     last_error: Union[str, None] = None
     last_output: Union[str, None] = None
     partial_variables: dict = None
+    memory: list[dict] = None  # [{"role": "assistant", "content": "I am a chatbot"}]
 
     return_reasoning: bool = False
     num_metrics_logged: int = 0
@@ -291,10 +292,10 @@ class BaseEngine(BaseModel, ABC):
             dict|None: run_metric if return_metrics is True
         """
         if self.return_metrics:
-            result, run_metrics = executor.predict_and_measure(**inputs)
+            result, run_metrics = executor.predict_and_measure(memory=self.memory, **inputs)
             self._log_metrics(run_metrics)
         else:
-            result, run_metrics = executor.predict(**inputs), None
+            result, run_metrics = executor.predict(memory=self.memory, **inputs), None
 
         return result, run_metrics
 
