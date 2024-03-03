@@ -68,9 +68,15 @@ class StructEngine(BaseEngine):
         prompt = self.prep_prompt(error_msg, **inputs)
         inputs_ = self.format_inputs(prompt, inputs, **kwargs)
 
+        if "<%last_output%>" in prompt:
+            prompt_ = prompt.split("<%last_output%>")[0]
+            formatted_prompt = prompt_.format(**inputs_) + "<%last_output%>" + prompt.split("<%last_output%>")[1]
+        else:
+            formatted_prompt = prompt.format(**inputs_)
+
         self._log_message(
             "Prompt",
-            formatted_prompt=prompt.format(**inputs_)
+            formatted_prompt=formatted_prompt
         )
 
         # generate
@@ -131,7 +137,7 @@ class StructEngine(BaseEngine):
         Returns:
             Any: The executor.
         """
-        return self.driver.load_driver(prompt=prompt, **kwargs)
+        return self.driver.load_driver(prompt=prompt, model_name=self.model_name, **self.llm_kwargs)
 
     def prep_inputs(self, inputs: dict, **kwargs) -> dict:
         """Analyzes input variables in prompt and prepares inputs for executor."""

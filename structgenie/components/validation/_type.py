@@ -85,7 +85,7 @@ def verify_date(key, value):
         except:
             pass
 
-    return f"Wrong date format for '{key}': '{value}'. Expected %Y-%m-%d, got {value}"
+    return f"Wrong date format for '{key}': '{value}'. Expected %Y-%m-%d, got {value}, type: {type(value)}"
 
 
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         print(instance_type(str_type)) # list[Union[str, None]]
 
 
-    dates = ['2022-10-12', '2022-10-12 12:00:00', '2022-10-12 12:00:00.000000']
+    dates = ['2022-10-10', '2022-10-12 12:00:00', '2022-10-12 12:00:00.000000']
 
     for date in dates:
         print(verify_date("date", date))

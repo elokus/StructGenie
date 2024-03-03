@@ -11,6 +11,14 @@ from structgenie.utils.openai import create_retry_decorator
 import os
 
 
+def clean_output(text: str) -> str:
+    """Clean the output from the generation."""
+    text = text.replace("\xa0", "_")
+    text = text.replace(u"\xa0", u"_")
+    text = text.replace("\\_", "_")
+    return text
+
+
 class MistralDriver(ChatDriver):
     """Mistral Chat Driver
 
@@ -74,6 +82,7 @@ class MistralDriver(ChatDriver):
         response = _completion()
 
         result = response.choices[0].message.content
+        result = clean_output(result)
         execution_metrics = {
             "execution_time": time.time() - exec_start,
             "token_usage": response.usage.total_tokens,

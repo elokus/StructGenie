@@ -17,6 +17,7 @@ def required_keys(validation_config: dict):
 
 
 def validate_keys(d: dict, val_config: dict) -> Union[str, None]:
+    d = {} if d is None else d
     missing_keys = [key for key in required_keys(val_config) if key not in d]
     for key in missing_keys:
         if key in val_config and val_config[key].get("default", None):

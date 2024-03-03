@@ -23,7 +23,13 @@ class ChatDriver(BaseGenerationDriver, ABC):
 
     def parse_prompt(self, memory: list[dict] = None, **kwargs) -> list[dict]:
         # add inputs to prompt
-        prompt = self.prompt.format(**kwargs)
+
+        if "<%last_output%>" in self.prompt:
+            prompt = self.prompt.split("<%last_output%>")[0]
+            prompt = prompt.format(**kwargs) + "<%last_output%>" + self.prompt.split("<%last_output%>")[1]
+        else:
+            prompt = self.prompt.format(**kwargs)
+
 
         # split prompt into sections
         system_message = split_prompt(prompt, "system")

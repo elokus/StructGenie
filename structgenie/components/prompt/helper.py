@@ -2,7 +2,7 @@ from typing import Callable
 
 import yaml
 from langchain.prompts.example_selector.base import BaseExampleSelector
-from taskchain.helper.document_chunker import num_tokens_from_string
+from langchain.helper.document_chunker import num_tokens_from_string
 
 
 def prep_remarks(template: str, error: str = None, **kwargs) -> str:

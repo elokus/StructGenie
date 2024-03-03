@@ -154,7 +154,11 @@ def _format_input_schema_inputs(input_schema: str, placeholder: str, value: Unio
 
 
 def _prepare_placeholders(prompt: str, inputs: dict, **kwargs) -> tuple:
-    match = re.findall(r"{.*?}", prompt, re.DOTALL)
+    if "<%last_output%>" in prompt:
+        prompt_ = prompt.split("<%last_output%>")[0]
+    else:
+        prompt_ = prompt
+    match = re.findall(r"{.*?}", prompt_, re.DOTALL)
     placeholder_inputs = {}
     if match:
         for placeholder in match:
