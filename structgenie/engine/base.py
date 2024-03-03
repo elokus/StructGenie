@@ -37,6 +37,8 @@ class BaseEngine(BaseModel, ABC):
 
     # executor
     driver: Type[BaseGenerationDriver] = OpenAIDriver
+    model_name: str = "gpt-3.5-turbo"
+    llm_kwargs: dict = Field(default_factory=dict)
 
     # prompt
     prompt_builder: BasePromptBuilder = None
