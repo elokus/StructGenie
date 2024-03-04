@@ -1,5 +1,4 @@
 import pytest
-from mistralai.models.chat_completion import ChatCompletionResponseChoice
 
 from structgenie.driver.openai_driver import OpenAIDriver
 from structgenie.driver.openai_vision import OpenAIDriverVision
