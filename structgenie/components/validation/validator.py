@@ -1,3 +1,7 @@
+from typing import Type
+
+from structgenie.pydantic_v1 import BaseModel
+
 from structgenie.base import BaseValidator
 from structgenie.components.validation._content import validate_content
 from structgenie.components.validation._object import *
@@ -26,6 +30,13 @@ class Validator(BaseValidator):
     def from_output_model(cls, output_model: BaseIOModel):
         """Build validator from output model"""
         return cls(validation_config=output_model.as_dict, output_model=output_model)
+
+    @classmethod
+    def from_pydantic(cls, model: Type[BaseModel]):
+        """Build validator from pydantic model"""
+        from structgenie.components.input_output import OutputModel
+        return cls.from_output_model(OutputModel.from_pydantic(model))
+
 
     def validate(self, output: dict, inputs: dict = None) -> Union[list, None]:
         """Validate the output based on the validation config."""

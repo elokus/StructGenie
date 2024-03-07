@@ -15,6 +15,7 @@ def extract_model(model: T):
     schema = model.schema()
     properties = schema.get("properties", {})
     definitions = schema.get("definitions", None)
+    required = schema.get("required", [])
     if definitions is None:
         definitions = schema.get("$defs", {})
 
@@ -22,6 +23,10 @@ def extract_model(model: T):
 
     for key_, value_ in properties.items():
         lines.extend(_extract_property(key_, value_, definitions))
+
+    for line in lines:
+        if "." not in line.key and line.key not in required:
+            line.type = f"Optional[{line.type}]"
 
     return lines
 
